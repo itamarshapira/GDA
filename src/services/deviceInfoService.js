@@ -4,6 +4,7 @@ import {
   MANUFACTURER_UUID,
   MODEL_NUMBER_UUID,
   SYSTEM_ID_UUID,
+  SERIAL_NUMBER_UUID,
   PRESENTATION_FORMAT_UUID, // not used yet, but ok to keep
 } from "./bleUuidLabels";
 
@@ -24,16 +25,22 @@ export const readDeviceInformation = async (device) => {
     }
 
     //*  Read string characteristics using the helper 
-    const manufacturer = await readStringCharacteristic(
+    const manufacturer = await readStringCharacteristic( // read Manufacturer Name
       device,
       DEVICE_INFORMATION_UUID,
       MANUFACTURER_UUID
     );
     
-    const modelNumber = await readStringCharacteristic(
+    const modelNumber = await readStringCharacteristic( // read Model Number
       device,
       DEVICE_INFORMATION_UUID,
       MODEL_NUMBER_UUID
+    );
+
+    const serialNumber = await readStringCharacteristic( // read Serial Number
+      device,
+      DEVICE_INFORMATION_UUID,
+      SERIAL_NUMBER_UUID
     );
 
     //*  Read System ID (usually a byte array / serial-like value)
@@ -54,6 +61,7 @@ export const readDeviceInformation = async (device) => {
     return {
       manufacturer,  
       modelNumber, 
+      serialNumber,
       systemID: systemIDHex, // formatted hex string
     };
   } catch (error) {

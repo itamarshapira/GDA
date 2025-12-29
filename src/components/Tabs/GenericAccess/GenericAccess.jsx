@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet } from "react-native";
 import { readGenericAccessInfo } from "../../../services/genericAccessService";
 
-const GenericAccess = ({ device }) => { // device prop passed from parent Tabs , and tabs get it from App, and app gets it from bleService
+const GenericAccess = ({ device }) => {
+  // device prop passed from parent Tabs , and tabs get it from App, and app gets it from bleService
   const [info, setInfo] = useState(null);
   const [error, setError] = useState(null);
 
@@ -21,27 +22,34 @@ const GenericAccess = ({ device }) => { // device prop passed from parent Tabs ,
       if (data) {
         console.log("🟪 [Generic Access] Sucsses:", data);
         setInfo(data);
-        
-
       } else {
         setError("Failed to read Generic Access info");
       }
     };
 
     fetchInfo();
-  }, [device]);
+  }, [device]); // re-run if device changes and when component mounts
 
   return (
-    <ScrollView style={styles.scrollArea} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.scrollArea}
+      contentContainerStyle={styles.content}
+    >
       <Text style={styles.header}>Generic Access Service</Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       {info ? (
         <>
-          <Text style={styles.text}>Device Name: {info.deviceName}</Text>
           <Text style={styles.text}>
-            Generic Sensor: {info.appearance !== null ? info.appearance : "N/A"} (Appearance)
+            Device Name: <Text style={styles.info}>{info.deviceName}</Text>
+          </Text>
+          <Text style={styles.text}>
+            Appearance:{" "}
+            <Text style={styles.info}>
+              {info.appearance !== null ? info.appearance : "N/A"}
+            </Text>{" "}
+            (Generic Sensor)
           </Text>
         </>
       ) : !error ? (
@@ -54,27 +62,28 @@ const GenericAccess = ({ device }) => { // device prop passed from parent Tabs ,
 const styles = StyleSheet.create({
   scrollArea: {
     flex: 1,
-   // backgroundColor: "rgb(40,40,40)",
+    // backgroundColor: "rgb(40,40,40)",
   },
   content: {
     paddingVertical: 20,
     paddingHorizontal: 12,
-      alignItems: "center", // align center horizontally
+    alignItems: "center", // align center horizontally
   },
   header: {
     color: "#fff",
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
-    
   },
   text: {
     color: "#ccc",
     fontSize: 18,
     //merginTop: 18,
     marginBottom: 18,
-   
-    
+  },
+  info: {
+    color: "#b2b2f4ff",
+    fontWeight: "bold",
   },
   error: {
     color: "tomato",

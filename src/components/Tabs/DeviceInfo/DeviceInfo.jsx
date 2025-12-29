@@ -6,7 +6,8 @@ const DeviceInfo = ({ device }) => {
   const [info, setInfo] = useState(null); // device info state to hold info from BLE
   const [error, setError] = useState(null);
 
-  useEffect(() => { // on component mount or device change
+  useEffect(() => {
+    // on component mount or device change
     const fetchInfo = async () => {
       if (!device) {
         setError("No BLE device");
@@ -27,17 +28,30 @@ const DeviceInfo = ({ device }) => {
   }, [device]);
 
   return (
-    <ScrollView style={styles.scrollArea} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.scrollArea}
+      contentContainerStyle={styles.content}
+    >
       <Text style={styles.header}>Device Information</Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
-      {info ? (
+      {info ? ( // if info is available, show it
         <>
-          <Text style={styles.text}>Manufacturer: {info.manufacturer}</Text>
-          <Text style={styles.text}>Model: {info.modelNumber}</Text>
-          <Text style={styles.text}>System ID: {info.systemID}{"\n"}(MAC Address) </Text> 
-          
+          <Text style={styles.text}>
+            Manufacturer: <Text style={styles.info}>{info.manufacturer}</Text>
+          </Text>
+          <Text style={styles.text}>
+            Model: <Text style={styles.info}>{info.modelNumber}</Text>
+          </Text>
+          <Text style={styles.text}>
+            Serial Number: <Text style={styles.info}>{info.serialNumber}</Text>
+          </Text>
+
+          <Text style={styles.text}>
+            System ID: <Text style={styles.info}>{info.systemID}</Text>
+            {"\n"}(MAC Address){" "}
+          </Text>
 
           {/* Extra text just to test scrolling */}
           {/* {Array.from({ length: 40 }).map((_, i) => (
@@ -52,15 +66,17 @@ const DeviceInfo = ({ device }) => {
 };
 
 const styles = StyleSheet.create({
-  scrollArea: { // full height scrollable
+  scrollArea: {
+    // full height scrollable
     flex: 1,
-   // backgroundColor: "rgb(40,40,40)",
+    // backgroundColor: "rgb(40,40,40)",
   },
-  content: { // inner content area
+  content: {
+    // inner content area
     paddingVertical: 20,
     paddingHorizontal: 12,
     alignItems: "center", // align center horizontally
-   // justifyContent: "center", // align center vertically
+    // justifyContent: "center", // align center vertically
   },
   header: {
     color: "#fff",
@@ -76,6 +92,10 @@ const styles = StyleSheet.create({
   error: {
     color: "tomato",
     marginBottom: 10,
+  },
+  info: {
+    color: "#b2b2f4ff",
+    fontWeight: "bold",
   },
 });
 

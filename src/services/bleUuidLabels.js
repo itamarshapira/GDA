@@ -15,12 +15,13 @@ export const MANUFACTURER_UUID = "00002a29-0000-1000-8000-00805f9b34fb";
 export const MODEL_NUMBER_UUID = "00002a24-0000-1000-8000-00805f9b34fb";
 export const SYSTEM_ID_UUID = "00002a23-0000-1000-8000-00805f9b34fb";
 export const PRESENTATION_FORMAT_UUID = "00002a3d-0000-1000-8000-00805f9b34fb"; // ! this not used yet, but ok to keep
+export const SERIAL_NUMBER_UUID = "00002a25-0000-1000-8000-00805f9b34fb"; // Serial Number String NEW UUID 
 
 // ✅ Alert Notification Service (0x1811)`
 export const ALERT_NOTIFICATION_UUID = "00001811-0000-1000-8000-00805f9b34fb"; // prime uuid for alert notification service
 export const ALERT_STATUS_UUID = "00002a3f-0000-1000-8000-00805f9b34fb";
 
-// ✅ Environmental Sensing Service (0x181A)
+// ✅ Environmental Sensing Service (0x181A) //* done exept temp notify
 export const ENVIRONMENTAL_SENSING_UUID = "0000181a-0000-1000-8000-00805f9b34fb";   // prime uuid for environmental sensing service
 export const METHANE_UUID = "00002bd1-0000-1000-8000-00805f9b34fb";
 export const TEMPERATURE_UUID = "00002a6e-0000-1000-8000-00805f9b34fb";

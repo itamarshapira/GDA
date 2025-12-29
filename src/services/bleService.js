@@ -233,9 +233,10 @@ export const readUint16BECharacteristic = async (device, serviceUUID, characteri
     if (bytes.length < 2) return null;
 
     // BIG-endian decode
-    const value = bytes.readUInt16BE(0);
+    const value = bytes.readUInt16BE(0); // readUInt16BE reads first 2 bytes as big-endian and converts to //*decimal number
 
-    console.log(`[BLE] Uint16 read from ${characteristicUUID}:`, value);
+    console.log(`[BLE] Uint16 read from ${characteristicUUID}: (Dec )`, value );
+    console.log( `(Hex: 0x${value.toString(16).padStart(4, "0").toUpperCase()})`);
     return value;
   } catch (err) {
     console.log(`[BLE] Failed to read Uint16: ${err.message}`);
@@ -291,7 +292,7 @@ export const monitorUint16LECharacteristic = (
   device,
   serviceUUID,
   characteristicUUID,
-  onValue
+  onValue // callback from environmentalService.js that came from Environmental.jsx
 ) => {
   if (!device) {
     console.log("[BLE] ❌ No device given to monitorUint16BECharacteristic");
@@ -365,13 +366,13 @@ export async function writeUint16LECharacteristic(
 ) {
   try {
     if (!device) {
-      console.log("[BLE] ❌ No device given to writeUint16BECharacteristic");
+      console.log("[BLE] ❌ No device given to write");
       return false;
     }
 
-    // Convert integer → 2-byte big endian
+    
     const buffer = Buffer.alloc(2);
-    buffer.writeUInt16LE(value);
+    buffer.writeUInt16LE(value); 
 
     const base64Payload = buffer.toString("base64");
 
@@ -388,3 +389,122 @@ export async function writeUint16LECharacteristic(
     return false;
   }
 }
+
+
+/**
+ ** Writes a UInt16 **BIG-ENDIAN** to a writable characteristic. 
+ *
+ * - device: connected BLE device
+ * - serviceUUID: service containing the characteristic
+ * - characteristicUUID: the target characteristic
+ * - value: integer (0–65535)
+ *
+ * Returns: true if success
+ */
+export async function writeUint16BECharacteristic(
+  device,
+  serviceUUID,
+  characteristicUUID,
+  value
+) {
+  try {
+    if (!device) {
+      console.log("[BLE] ❌ No device given to write");
+      return false;
+    }
+
+    // Convert integer → 2-byte big endian
+    const buffer = Buffer.alloc(2);
+    buffer.writeUInt16BE(value);
+
+    const base64Payload = buffer.toString("base64");
+
+    await device.writeCharacteristicWithResponseForService(
+      serviceUUID,
+      characteristicUUID,
+      base64Payload
+    );
+
+    console.log(`[BLE] ✍️ Wrote UInt16 to ${characteristicUUID}:`, value);
+    return true;
+  } catch (err) {
+    console.log("[BLE] ❌ Write failed:", err.message);
+    return false;
+  }
+}
+
+/**
+ * Write UInt8 (1 byte) to a BLE characteristic
+ * Used for enum-like values (e.g. Gas Type)
+ */
+export async function writeUint8Characteristic(
+  device,
+  serviceUUID,
+  characteristicUUID,
+  value
+) {
+  try {
+    if (!device) {
+      console.log("[BLE] ❌ No device given to write UInt8");
+      return false;
+    }
+
+    const buffer = Buffer.alloc(1); // 👈 EXACTLY 1 byte
+    buffer.writeUInt8(value);
+
+    const base64Payload = buffer.toString("base64");
+
+    await device.writeCharacteristicWithResponseForService(
+      serviceUUID,
+      characteristicUUID,
+      base64Payload
+    );
+
+    console.log(
+      `[BLE] ✍️ Wrote UInt8 to ${characteristicUUID}:`,
+      value
+    );
+
+    return true;
+  } catch (err) {
+    console.log("[BLE] ❌ UInt8 write failed:", err.message);
+    return false;
+  }
+}
+
+/**
+ * Read a UInt8 (1 byte) from a BLE characteristic.
+ * Perfect for enum values like Media Control Point (0/1/2).
+ */
+export const readUint8Characteristic = async (
+  device,
+  serviceUUID,
+  characteristicUUID
+) => {
+  try {
+    if (!device) {
+      console.log("[BLE] ❌ No device given to read UInt8");
+      return null;
+    }
+
+    const characteristic = await device.readCharacteristicForService(
+      serviceUUID,
+      characteristicUUID
+    );
+
+    if (!characteristic?.value) return null;
+
+    const bytes = Buffer.from(characteristic.value, "base64");
+
+    // Ensure at least 1 byte exists
+    if (bytes.length < 1) return null;
+
+    const value = bytes.readUInt8(0);
+
+    console.log(`[BLE] UInt8 read from ${characteristicUUID}:`, value);
+    return value;
+  } catch (err) {
+    console.log(`[BLE] Failed to read UInt8: ${err.message}`);
+    return null;
+  }
+};

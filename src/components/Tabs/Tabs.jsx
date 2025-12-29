@@ -5,31 +5,28 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
 } from "react-native";
 import DeviceInfo from "./DeviceInfo/DeviceInfo";
 import GenericAccess from "./GenericAccess/GenericAccess";
 import Environmental from "./Environmental/Environmental";
-
+import DeviceSettings from "./DeviceSettings/DeviceSettings";
+import MediaControl from "./MediaControl/MediaControl";
+import AlertNotification from "./AlertNotification/AlertNotification";
 
 const Tabs = ({ device }) => {
-
   const [selectedTab, setSelectedTab] = useState("deviceInfo");
 
   const TabButton = (id, label) => (
     <TouchableOpacity key={id} onPress={() => setSelectedTab(id)}>
-      <Text style={[
-        styles.menuItem,
-        selectedTab === id && styles.active
-      ]}>
+      <Text style={[styles.menuItem, selectedTab === id && styles.active]}>
         {label}
       </Text>
-    </TouchableOpacity> 
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-
       {/* Top Half */}
       <View style={styles.videoContainer}>
         <Text style={styles.videoText}>Video Placeholder</Text>
@@ -37,7 +34,6 @@ const Tabs = ({ device }) => {
 
       {/* Bottom Half */}
       <View style={styles.bottomContainer}>
-        
         {/* TAbs Scrollable! */}
         <ScrollView
           horizontal
@@ -47,9 +43,10 @@ const Tabs = ({ device }) => {
           {TabButton("deviceInfo", "Device Info")}
           {TabButton("generic", "Generic Access")}
           {TabButton("environmental", "Env Sensing")}
-
-          {TabButton("alert", "Alert Notification")}
+          {TabButton("mediaControl", "Media Control")}
           {TabButton("settings", "Settings")}
+          {TabButton("alert", "Alert Notification")}
+
           {TabButton("battery", "Battery")}
           {TabButton("logs", "Logs")}
           {TabButton("upgrade", "Firmware")}
@@ -58,15 +55,27 @@ const Tabs = ({ device }) => {
         {/* Tab scrren chosen */}
         <View style={styles.screenArea}>
           {selectedTab === "deviceInfo" && <DeviceInfo device={device} />}
-          {selectedTab === "generic" && <GenericAccess device={device} />}
-          {selectedTab === "environmental" && <Environmental device={device} />}
+          {selectedTab === "alert" && <AlertNotification device={device} />}
 
-          {selectedTab === "alert" && (
-            <Text style={styles.fakeText}>Alerts Data Coming Soon</Text>
-          )}
-          {selectedTab === "settings" && (
-            <Text style={styles.fakeText}>Settings Coming Soon</Text>
-          )}
+          {selectedTab === "generic" && <GenericAccess device={device} />}
+          {/* 
+    NEW: Environmental is ALWAYS mounted.
+    We hide it when it's not the active tab.
+    This prevents BLE notify from running on an unmounted component.
+  */}
+          <View
+            style={{
+              flex: 1,
+              display: selectedTab === "environmental" ? "flex" : "none",
+            }}
+          >
+            {/* This component is always alive — notify keeps running safely */}
+            <Environmental device={device} />
+          </View>
+
+          {selectedTab === "settings" && <DeviceSettings device={device} />}
+          {selectedTab === "mediaControl" && <MediaControl device={device} />}
+
           {selectedTab === "battery" && (
             <Text style={styles.fakeText}>Battery Coming Soon </Text>
           )}
@@ -77,14 +86,12 @@ const Tabs = ({ device }) => {
             <Text style={styles.fakeText}>Firmware Update Coming Soon</Text>
           )}
         </View>
-
       </View>
     </View>
   );
 };
 
 export default Tabs;
-
 
 const styles = StyleSheet.create({
   container: {
@@ -118,7 +125,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     borderBottomWidth: 1,
     borderBottomColor: "#444",
-    
   },
 
   menuItem: {
@@ -133,13 +139,12 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 
-  screenArea: { // area where tab content shows - could came from the component itself
+  screenArea: {
+    // area where tab content shows - could came from the component itself
     flex: 18, // 18 full?
-    
-   //backgroundColor: "#751414ff",
-    
-    
-    
+
+    //backgroundColor: "#751414ff",
+
     // paddingHorizontal: 10,
     // paddingVertical: 6,
   },
