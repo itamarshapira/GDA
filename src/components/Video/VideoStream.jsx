@@ -36,13 +36,13 @@ const styles = StyleSheet.create({
     height: 30,
     width: Dimensions.get("window").width,
 
-    color: "white",
+    color: "#b2b2f47c",
     textAlign: "center",
     fontSize: 15,
     lineHeight: 30, // centers text vertically
     fontWeight: "600",
 
-    backgroundColor: "#111", // subtle header look
+    backgroundColor: "#000000ff", // subtle header look
   },
 
   webview: {
