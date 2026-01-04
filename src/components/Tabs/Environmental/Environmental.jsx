@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import {
@@ -139,26 +145,24 @@ const Environmental = ({ device }) => {
 
       {methane !== null ? (
         <>
-          <Text style={styles.text}>
-            Methane Concentration:{" "}
-            <Text style={styles.value}>{methane} LEL</Text>
-          </Text>
+          <View style={styles.methaneRow}>
+            <Text style={styles.text}>
+              Methane Concentration:{" "}
+              <Text style={styles.value}>{methane} LEL</Text>
+            </Text>
 
-          {/* Toggle Methane Notify Button */}
-          <Text
-            onPress={toggleMethaneNotify}
-            style={{
-              marginTop: 20,
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              backgroundColor: notifyMethane ? "#c62828" : "#2e7d32",
-              color: "white",
-              borderRadius: 8,
-              fontSize: 18,
-            }}
-          >
-            {notifyMethane ? "STOP Methane Notify" : "START Methane Notify"}
-          </Text>
+            <TouchableOpacity
+              onPress={toggleMethaneNotify}
+              activeOpacity={0.2} // 👈 strong, visible feedback
+            >
+              <MaterialIcons
+                name={notifyMethane ? "notifications" : "notifications-off"}
+                size={32}
+                color={notifyMethane ? "#04de71ff" : "#aea8a8ff"}
+                style={{ marginBottom: 8 }}
+              />
+            </TouchableOpacity>
+          </View>
         </>
       ) : (
         <Text style={styles.text}>Reading methane…</Text>
@@ -248,5 +252,10 @@ const styles = StyleSheet.create({
   intervalActive: {
     backgroundColor: "#6a6af4",
     fontWeight: "bold",
+  },
+  methaneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
   },
 });
