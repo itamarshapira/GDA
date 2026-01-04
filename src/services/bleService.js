@@ -508,3 +508,5 @@ export const readUint8Characteristic = async (
     return null;
   }
 };
+
+

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 
 import {
   readMethane,

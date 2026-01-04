@@ -1,12 +1,10 @@
-// src/services/alertNotificationService.js
-
 /**
  * Alert Notification Service
  * --------------------------
  * Service UUID: 0x1811
  * Characteristic: Alert Status (0x2A3F)
  *
- * Value: UInt16 bitmask
+ * Value: UInt16 bitmask (BIG-ENDIAN)
  */
 
 import {
@@ -17,12 +15,13 @@ import {
 import {
   readUint16BECharacteristic,
   monitorUint16BECharacteristic,
-  readUint16LECharacteristic
+  monitorUint16LECharacteristic
 } from "./bleService";
 
 /**
  * Read Alert Status once
- * @returns {number|null} UInt16 bitmask
+ * @param {object} device
+ * @returns {number|null}
  */
 export async function readAlertStatus(device) {
   if (!device) {
@@ -47,15 +46,21 @@ export async function readAlertStatus(device) {
     console.log("[AlertService] ✅ Alert status =", value);
     return value;
   } catch (err) {
-    console.log("[AlertService] ❌ Failed to read alert status:", err.message);
+    console.log(
+      "[AlertService] ❌ Failed to read alert status:",
+      err.message
+    );
     return null;
   }
 }
 
 /**
  * Start Alert Status NOTIFY
+ * Ownership: COMPONENT
+ *
+ * @param {object} device
  * @param {function} onValue callback(newValue)
- * @returns subscription (call remove() to stop)
+ * @returns {object|null} subscription (call .remove() to stop)
  */
 export function startAlertStatusNotify(device, onValue) {
   if (!device) {
@@ -65,7 +70,7 @@ export function startAlertStatusNotify(device, onValue) {
 
   console.log("[AlertService] 🔔 Starting alert notify");
 
-  return monitorUint16BECharacteristic(
+  return monitorUint16LECharacteristic(
     device,
     ALERT_NOTIFICATION_UUID,
     ALERT_STATUS_UUID,

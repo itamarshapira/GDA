@@ -13,9 +13,9 @@ import Environmental from "./Environmental/Environmental";
 import DeviceSettings from "./DeviceSettings/DeviceSettings";
 import MediaControl from "./MediaControl/MediaControl";
 import AlertNotification from "./AlertNotification/AlertNotification";
-
+import VideoStream from "../Video/VideoStream";
 const Tabs = ({ device }) => {
-  const [selectedTab, setSelectedTab] = useState("deviceInfo");
+  const [selectedTab, setSelectedTab] = useState("alert");
 
   const TabButton = (id, label) => (
     <TouchableOpacity key={id} onPress={() => setSelectedTab(id)}>
@@ -29,7 +29,7 @@ const Tabs = ({ device }) => {
     <View style={styles.container}>
       {/* Top Half */}
       <View style={styles.videoContainer}>
-        <Text style={styles.videoText}>Video Placeholder</Text>
+        <VideoStream />
       </View>
 
       {/* Bottom Half */}
@@ -40,12 +40,12 @@ const Tabs = ({ device }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabMenu}
         >
-          {TabButton("deviceInfo", "Device Info")}
-          {TabButton("generic", "Generic Access")}
+          {TabButton("alert", "Alert Notification")}
           {TabButton("environmental", "Env Sensing")}
           {TabButton("mediaControl", "Media Control")}
           {TabButton("settings", "Settings")}
-          {TabButton("alert", "Alert Notification")}
+          {TabButton("deviceInfo", "Device Info")}
+          {TabButton("generic", "Generic Access")}
 
           {TabButton("battery", "Battery")}
           {TabButton("logs", "Logs")}
@@ -55,7 +55,14 @@ const Tabs = ({ device }) => {
         {/* Tab scrren chosen */}
         <View style={styles.screenArea}>
           {selectedTab === "deviceInfo" && <DeviceInfo device={device} />}
-          {selectedTab === "alert" && <AlertNotification device={device} />}
+          <View
+            style={{
+              flex: 1,
+              display: selectedTab === "alert" ? "flex" : "none",
+            }}
+          >
+            <AlertNotification device={device} />
+          </View>
 
           {selectedTab === "generic" && <GenericAccess device={device} />}
           {/* 
@@ -103,11 +110,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#2d2d2d",
+    backgroundColor: "#be1010ff",
   },
   videoText: {
     fontSize: 20,
-    color: "#aaa",
+    color: "#853a3aff",
   },
 
   bottomContainer: {
