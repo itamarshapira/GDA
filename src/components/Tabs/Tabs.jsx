@@ -42,7 +42,7 @@ const Tabs = ({ device }) => {
         >
           {TabButton("alert", "Alert Notification")}
           {TabButton("environmental", "Env Sensing")}
-          {TabButton("mediaControl", "Media Control")}
+          {TabButton("mediaControl", "Device Control")}
           {TabButton("settings", "Settings")}
           {TabButton("deviceInfo", "Device Info")}
           {TabButton("generic", "Generic Access")}
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#be1010ff",
+    backgroundColor: "#c94343ff",
   },
   videoText: {
     fontSize: 20,
