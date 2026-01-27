@@ -12,50 +12,52 @@ import {
   startAlertStatusNotify,
 } from "../../../services/alertNotificationService";
 
+import AlertBanner from "../../AlertBanner/AlertBanner";
+
 import { ALERT_PRIORITY } from "../../../services/alertPriority";
 
-// ✅ Small UI component: shows the "top alert" banner based on alertStatus bitmask
-function AlertBanner({ alertStatus }) {
-  // null = not loaded yet
-  if (alertStatus === null) return null;
+// // ✅ Small UI component: shows the "top alert" banner based on alertStatus bitmask
+// function AlertBanner({ alertStatus }) {
+//   // null = not loaded yet
+//   if (alertStatus === null) return null;
 
-  // 0 = all clear
-  if (alertStatus === 0) {
-    return (
-      <View style={[styles.banner, styles.bannerOk]}>
-        <Text style={styles.bannerText}>All clear — no alerts</Text>
-      </View>
-    );
-  }
+//   // 0 = all clear
+//   if (alertStatus === 0) {
+//     return (
+//       <View style={[styles.banner, styles.bannerOk]}>
+//         <Text style={styles.bannerText}>All clear — no alerts</Text>
+//       </View>
+//     );
+//   }
 
-  // Build list of active alerts from bits 0..15
-  const activeAlerts = [];
-  for (let i = 0; i < 16; i++) {
-    const mask = 1 << i;
-    if ((alertStatus & mask) !== 0) {
-      if (ALERT_PRIORITY[mask]) {
-        activeAlerts.push(ALERT_PRIORITY[mask]);
-      } else {
-        activeAlerts.push({ name: `Unknown bit ${i}`, priority: 99 });
-      }
-    }
-  }
+//   // Build list of active alerts from bits 0..15
+//   const activeAlerts = [];
+//   for (let i = 0; i < 16; i++) {
+//     const mask = 1 << i;
+//     if ((alertStatus & mask) !== 0) {
+//       if (ALERT_PRIORITY[mask]) {
+//         activeAlerts.push(ALERT_PRIORITY[mask]);
+//       } else {
+//         activeAlerts.push({ name: `Unknown bit ${i}`, priority: 99 });
+//       }
+//     }
+//   }
 
-  // pick highest priority (smallest number)
-  activeAlerts.sort((a, b) => a.priority - b.priority);
-  const topAlert = activeAlerts[0];
+//   // pick highest priority (smallest number)
+//   activeAlerts.sort((a, b) => a.priority - b.priority);
+//   const topAlert = activeAlerts[0];
 
-  return (
-    <View style={[styles.banner, styles.bannerBad]}>
-      <Text style={styles.bannerText}>
-        Status: {topAlert?.name || "Unknown alert"}
-      </Text>
-    </View>
-  );
-}
+//   return (
+//     <View style={[styles.banner, styles.bannerBad]}>
+//       <Text style={styles.bannerText}>
+//         Status: {topAlert?.name || "Unknown alert"}
+//       </Text>
+//     </View>
+//   );
+// }
 
-const AlertNotification = ({ device }) => {
-  const [alertStatus, setAlertStatus] = useState(null);
+const AlertNotification = ({ device, alertStatus, setAlertStatus }) => {
+  // const [alertStatus, setAlertStatus] = useState(null); moved to Tabs.jsx
   const [error, setError] = useState(null);
   const [showDiagnostics, setShowDiagnostics] = useState(true);
 
@@ -145,7 +147,7 @@ const AlertNotification = ({ device }) => {
       showsVerticalScrollIndicator
     >
       <Text style={styles.header}>Alert Notification</Text>
-      <AlertBanner alertStatus={alertStatus} /> {/* show top alert banner */}
+      {/* <AlertBanner alertStatus={alertStatus} /> show top alert banner */}
       {error && <Text style={styles.error}>{error}</Text>}
       <View style={styles.actions}>
         <TouchableOpacity

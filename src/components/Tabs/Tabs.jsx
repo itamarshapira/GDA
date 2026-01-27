@@ -14,6 +14,7 @@ import DeviceSettings from "./DeviceSettings/DeviceSettings";
 import MediaControl from "./MediaControl/MediaControl";
 import AlertNotification from "./AlertNotification/AlertNotification";
 import VideoStream from "../Video/VideoStream";
+import AlertBanner from "../AlertBanner/AlertBanner";
 const Tabs = ({ device }) => {
   const [selectedTab, setSelectedTab] = useState("alert");
 
@@ -25,11 +26,20 @@ const Tabs = ({ device }) => {
     </TouchableOpacity>
   );
 
+  const [alertStatus, setAlertStatus] = useState(null); // State for alert status and alert banner origanlly create in AlertNotification.jsx
+
   return (
     <View style={styles.container}>
       {/* Top Half */}
-      <View style={styles.videoContainer}>
-        <VideoStream />
+      {selectedTab !== "settings" && (
+        <View style={styles.videoContainer}>
+          <VideoStream />
+        </View>
+      )}
+
+      {/* 🔔 GLOBAL ALERT BANNER (attached to video) */}
+      <View style={styles.alertWrapper}>
+        <AlertBanner alertStatus={alertStatus} />
       </View>
 
       {/* Bottom Half */}
@@ -61,7 +71,11 @@ const Tabs = ({ device }) => {
               display: selectedTab === "alert" ? "flex" : "none",
             }}
           >
-            <AlertNotification device={device} />
+            <AlertNotification
+              device={device}
+              alertStatus={alertStatus}
+              setAlertStatus={setAlertStatus}
+            />
           </View>
 
           {selectedTab === "generic" && <GenericAccess device={device} />}
@@ -103,14 +117,14 @@ export default Tabs;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    backgroundColor: "#000000ff",
   },
 
   videoContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#c94343ff",
+    backgroundColor: "#000000ff",
   },
   videoText: {
     fontSize: 20,
@@ -161,5 +175,13 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 25,
     fontSize: 18,
+  },
+  alertWrapper: {
+    backgroundColor: "#222",
+    //justifyContent: "center",
+    //alignItems: "center"
+    //paddingVertical: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444444ff", // subtle separator from tabs
   },
 });

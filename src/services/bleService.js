@@ -9,13 +9,13 @@ export const manager = new BleManager();
  * Connects to the first FG device found.
  */
 export async function connectToDevice() {
-  console.log("🔍 Scanning for BLE devices... (bleService.js)");
+  console.log(" Scanning for BLE devices... (bleService.js)");
   let isConnected = false;
 
   return new Promise((resolve, reject) => {
     manager.startDeviceScan(null, null, async (error, device) => {
       if (error) {
-        console.log("❌ Scan error:", error);
+        console.log(" Scan error:", error);
         manager.stopDeviceScan();
         reject(error);
         return;
@@ -34,8 +34,28 @@ export async function connectToDevice() {
           await connectedDevice.discoverAllServicesAndCharacteristics();
           console.log("🔎 Services & characteristics discovered");
 
+// ✅ Enable Service Changed indication (0x2A05)
+const GENERIC_ATTRIBUTE_SERVICE = "00001801-0000-1000-8000-00805f9b34fb";
+const SERVICE_CHANGED_CHAR = "00002a05-0000-1000-8000-00805f9b34fb";
+
+connectedDevice.monitorCharacteristicForService(
+  GENERIC_ATTRIBUTE_SERVICE,
+  SERVICE_CHANGED_CHAR,
+  (error, characteristic) => {
+    if (error) {
+      console.log("[ServiceChanged] ❌ Error:", error.message);
+      return;
+    }
+    console.log("[ServiceChanged] ✅ Service Changed indication received!");
+  }
+);
+
+console.log("[ServiceChanged] ✅ Subscribed to Service Changed indications");
+
+
           await logServicesAndCharacteristics(connectedDevice);
           resolve(connectedDevice);
+          
         } catch (err) {
           console.log("❌ Connection error:", err);
           reject(err);
@@ -128,33 +148,34 @@ export async function logServicesAndCharacteristics(device) {
 }
 
 
-/**
- * Forces Android to refresh the GATT table.
- * (Android caches the GATT after first connect.)
- */
+
 export async function forceRefreshGatt(device) {
   try {
-    if (!device) {
-      console.log("[BleRefresh] ❌ No device provided");
-      return null;
-    }
+    console.log("[BleRefresh] 🔄 Single GATT refresh");
 
-    console.log("[BleRefresh] 🔄 Forcing GATT refresh...");
+    // 1) Disconnect (this is what actually clears cache)
     await device.cancelConnection();
-    await new Promise((r) => setTimeout(r, 1000));
 
-    const newDevice = await manager.connectToDevice(device.id, {
+    // 2) Critical delay — gives Android time to drop GATT
+    await new Promise(r => setTimeout(r, 800));
+
+    // 3) Reconnect
+    const fresh = await manager.connectToDevice(device.id, {
       autoConnect: false,
     });
-    await newDevice.discoverAllServicesAndCharacteristics();
 
-    console.log("[BleRefresh]  GATT rediscovery complete");
-    return newDevice;
+    // 4) Rediscover
+    await fresh.discoverAllServicesAndCharacteristics();
+
+    console.log("[BleRefresh] ✅ Refresh done");
+
+    return fresh;
   } catch (e) {
-    console.log("[BleRefresh]  Failed to refresh GATT:", e.message);
+    console.log("[BleRefresh] ❌ Failed:", e.message);
     return null;
   }
 }
+
 
 //*  Helper to read a UTF-8 string from a characteristic (React Native version)
 /** 

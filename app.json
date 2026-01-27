@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "GDA",
+    "name": "GasApp",
     "slug": "GDA",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,15 +17,15 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "usesCleartextTraffic": true,
+      "networkSecurityConfig": {
+        "cleartextTrafficPermitted": true
+      },
       "permissions": [
-        "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.BLUETOOTH_CONNECT",
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT",
@@ -34,19 +34,31 @@
         "BLUETOOTH_CONNECT",
         "BLUETOOTH_SCAN",
         "ACCESS_FINE_LOCATION",
-
-         "INTERNET",
-    "ACCESS_WIFI_STATE",
-    "CHANGE_WIFI_STATE"
-        
+        "INTERNET",
+        "ACCESS_WIFI_STATE",
+        "CHANGE_WIFI_STATE"
       ],
       "package": "com.anonymous.gasApp"
     },
-   "web": {
+    "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+          "usesCleartextTraffic": true
+          }
+        }
+      ],
       "react-native-ble-plx"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "11465704-b190-4e61-8e7c-28eaf91235b4"
+      }
+    },
+    "owner": "itamarshapira"
   }
 }

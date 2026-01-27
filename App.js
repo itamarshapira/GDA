@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, StatusBar, Platform } from "react-native";
 import Navbar from "./src/components/Navbar/Navbar";
 
 
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { I18nManager } from 'react-native'; // import I18nManager to manage layout direction
  I18nManager.allowRTL(false);  // disable right-to-left layout
@@ -13,7 +14,7 @@ import { I18nManager } from 'react-native'; // import I18nManager to manage layo
  import Welcome from "./src/components/Welcome/Welcome";
  import Login1 from "./src/components/Login1/Login1";
  import Tabs from "./src/components/Tabs/Tabs";
-
+  import Footer from "./src/components/Footer/Footer";
 
 
 export default function App() {
@@ -27,7 +28,7 @@ export default function App() {
       <StatusBar
         translucent={false} // keep false so background color shows on Android
         backgroundColor="#4b46ac" // visible blue background
-        barStyle="light-content" // light icons/text on top of blue
+        barStyle="dark-content" // light icons/text on top of blue
       />
       <Navbar
         onBleConnected={(device) => {
@@ -49,11 +50,23 @@ export default function App() {
           <Login1
             device={connectedDevice}          // Pass the BLE device to Login1
             onLogin={() => setIsLoggedIn(true)} // Login1 calls this after passkey
-          />
+          /> 
+          
         )
       ) : (
-        <Welcome />
+        <View style={{ flex: 1 }}>
+  {/* Centered Welcome */}
+  <View style={{ flex: 1, justifyContent: "center" }}>
+    <Welcome />
+  </View >
+
+  {/* Footer at the very bottom */}
+  <Footer />
+</View>
+
       )}
+
+      
       
       {/* Main content area
       <View style={styles.content}>
@@ -68,7 +81,8 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#2d2d2d",
+    //backgroundColor: "#2d2d2dff",
+    backgroundColor: "#ebf9faff",
     elevation: 4,                // shadow for Android
     shadowColor: "#000",         // shadow for iOS
     shadowOpacity: 0.1,

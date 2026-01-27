@@ -6,6 +6,8 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 
 import {
@@ -25,6 +27,8 @@ import {
   GAS_TYPE_MAP,
   writeGasType,
 } from "../../../services/deviceSettingsService";
+
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { Picker } from "@react-native-picker/picker"; // for dropdown selection
 
@@ -308,206 +312,247 @@ const DeviceSettings = ({ device }) => {
 
   // * ------------------End Writing--------------------------------------------
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Device Settings</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={80} // important for Tabs/header
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.header}>Device Settings</Text>
+        {error && <Text style={styles.error}>{error}</Text>}
 
-      {fullScale !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Full Scale:</Text>
-            <Text style={styles.value}>{fullScale}</Text>
+        {fullScale !== null ? (
+          <View style={styles.row}>
+            <View style={styles.colLabel}>
+              <Text style={styles.label}>Full Scale:</Text>
+            </View>
+
+            <View style={styles.colValue}>
+              <Text style={styles.value}>{fullScale}</Text>
+            </View>
+
+            {/* Input field for edit full scale */}
+            <View style={styles.colInput}>
+              <TextInput
+                onChangeText={setFullScaleInput}
+                keyboardType="number-pad"
+                //inputMode="numeric"
+                placeholder="edit value"
+                style={styles.input}
+              />
+            </View>
+
+            {/* Save button */}
+            <View style={styles.colButton}>
+              <TouchableOpacity
+                onPress={handleSaveFullScale}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Full Scale…</Text>
+        ) : null}
 
-          {/* Input field for edit full scale */}
-          <TextInput
-            // value={fullScaleInput} show value immidiatly on input
-            onChangeText={setFullScaleInput}
-            keyboardType="numeric"
-            placeholder="edit value"
-            //placeholderTextColor="#888"
-            style={styles.input}
-          />
+        {alarmLevel !== null ? (
+          <View style={styles.row}>
+            <View style={styles.colLabel}>
+              <Text style={styles.label}>Alarm Level:</Text>
+            </View>
 
-          {/* Save button */}
-          <TouchableOpacity
-            onPress={handleSaveFullScale}
-            //activeOpacity={0.7}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Full Scale…</Text>
-      ) : null}
+            <View style={styles.colValue}>
+              <Text style={styles.value}>{alarmLevel}</Text>
+            </View>
 
-      {alarmLevel !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Alarm Level:</Text>
-            <Text style={styles.value}>{alarmLevel}</Text>
+            <View style={styles.colInput}>
+              <TextInput
+                onChangeText={setAlarmLevelInput}
+                keyboardType="number-pad"
+                placeholder="edit value"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.colButton}>
+              <TouchableOpacity
+                onPress={handleSaveAlarmLevel}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Alarm Level…</Text>
+        ) : null}
 
-          <TextInput
-            // value={alarmLevelInput}
-            onChangeText={setAlarmLevelInput}
-            keyboardType="numeric"
-            placeholder="edit value"
-            //placeholderTextColor="#888"
-            style={styles.input}
-          />
+        {warnLevel !== null ? (
+          <View style={styles.row}>
+            <View style={styles.colLabel}>
+              <Text style={styles.label}>Warn Level:</Text>
+            </View>
 
-          {/* Save button */}
-          <TouchableOpacity
-            onPress={handleSaveAlarmLevel}
-            //activeOpacity={0.7}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Alarm Level…</Text>
-      ) : null}
+            <View style={styles.colValue}>
+              <Text style={styles.value}>{warnLevel}</Text>
+            </View>
 
-      {warnLevel !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Warn Level:</Text>
-            <Text style={styles.value}>{warnLevel}</Text>
+            <View style={styles.colInput}>
+              <TextInput
+                onChangeText={setWarnLevelInput}
+                keyboardType="numeric"
+                placeholder="edit value"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.colButton}>
+              <TouchableOpacity
+                onPress={handleSaveWarnLevel}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Warn Level…</Text>
+        ) : null}
 
-          <TextInput
-            //value={warnLevelInput}
-            onChangeText={setWarnLevelInput}
-            keyboardType="numeric"
-            placeholder="edit value"
-            style={styles.input}
-          />
+        {lowestLevel !== null ? (
+          <View style={styles.row}>
+            <View style={styles.colLabel}>
+              <Text style={styles.label}>Lowest Level:</Text>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleSaveWarnLevel}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Warn Level…</Text>
-      ) : null}
+            <View style={styles.colValue}>
+              <Text style={styles.value}>{lowestLevel}</Text>
+            </View>
 
-      {lowestLevel !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Lowest Level:</Text>
-            <Text style={styles.value}>{lowestLevel}</Text>
+            <View style={styles.colInput}>
+              <TextInput
+                onChangeText={setLowestLevelInput}
+                keyboardType="numeric"
+                placeholder="edit value"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.colButton}>
+              <TouchableOpacity
+                onPress={handleSaveLowestLevel}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Lowest Level…</Text>
+        ) : null}
 
-          <TextInput
-            //value={lowestLevelInput} show value immidiatly on input
-            onChangeText={setLowestLevelInput}
-            keyboardType="numeric"
-            placeholder="edit value"
-            style={styles.input}
-          />
+        {responseTime !== null ? (
+          <View style={styles.row}>
+            <View style={styles.colLabel}>
+              <Text style={styles.label}>Res Time:</Text>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleSaveLowestLevel}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Lowest Level…</Text>
-      ) : null}
+            <View style={styles.colValue}>
+              <Text style={styles.value}>{responseTime}</Text>
+            </View>
 
-      {responseTime !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Res Time:</Text>
-            <Text style={styles.value}>{responseTime}</Text>
+            <View style={styles.colInput}>
+              <TextInput
+                onChangeText={setResponseTimeInput}
+                keyboardType="numeric"
+                placeholder="edit value"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.colButton}>
+              <TouchableOpacity
+                onPress={handleSaveResponseTime}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Response Time…</Text>
+        ) : null}
 
-          <TextInput
-            //value={responseTimeInput} show value immidiatly on input
-            onChangeText={setResponseTimeInput}
-            keyboardType="numeric"
-            placeholder="edit value"
-            style={styles.input}
-          />
+        {blockDelay !== null ? (
+          <View style={styles.row}>
+            <View style={styles.colLabel}>
+              <Text style={styles.label}>Block Delay:</Text>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleSaveResponseTime}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Response Time…</Text>
-      ) : null}
+            <View style={styles.colValue}>
+              <Text style={styles.value}>{blockDelay}</Text>
+            </View>
 
-      {blockDelay !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Block Delay:</Text>
-            <Text style={styles.value}>{blockDelay}</Text>
+            <View style={styles.colInput}>
+              <TextInput
+                onChangeText={setBlockDelayInput}
+                keyboardType="numeric"
+                placeholder="edit value"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.colButton}>
+              <TouchableOpacity
+                onPress={handleSaveBlockDelay}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Block Delay…</Text>
+        ) : null}
 
-          <TextInput
-            //value={blockDelayInput} show value immidiatly on input
-            onChangeText={setBlockDelayInput}
-            keyboardType="numeric"
-            placeholder="edit value"
-            style={styles.input}
-          />
+        {gasType !== null ? (
+          <View style={styles.row}>
+            <View style={styles.labelContainer}>
+              <Text style={styles.label}>Gas Type:</Text>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleSaveBlockDelay}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Block Delay…</Text>
-      ) : null}
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={gasTypeInput}
+                onValueChange={(v) => setGasTypeInput(v)}
+                style={styles.picker}
+              >
+                {Object.keys(GAS_TYPE_MAP).map((key) => (
+                  <Picker.Item
+                    key={key}
+                    label={GAS_TYPE_MAP[key]}
+                    value={Number(key)}
+                  />
+                ))}
+              </Picker>
 
-      {gasType !== null ? (
-        <View style={styles.row}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>Gas Type:</Text>
-          </View>
-
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={gasTypeInput}
-              onValueChange={(v) => setGasTypeInput(v)}
-              style={styles.picker}
-            >
-              {Object.keys(GAS_TYPE_MAP).map((key) => (
-                <Picker.Item
-                  key={key}
-                  label={GAS_TYPE_MAP[key]}
-                  value={Number(key)}
-                />
-              ))}
-            </Picker>
-
-            {/* <TouchableOpacity
+              {/* <TouchableOpacity
               onPress={() => handleSaveGasType(gasTypeInput)}
               style={styles.saveButton}
             >
               <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity> */}
+            </View>
           </View>
-        </View>
-      ) : !error ? (
-        <Text style={styles.text}>Reading Gas Type…</Text>
-      ) : null}
-    </ScrollView>
+        ) : !error ? (
+          <Text style={styles.text}>Reading Gas Type…</Text>
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -518,6 +563,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: 50,
+    marginBottom: 80,
   },
   header: {
     color: "#fff",
@@ -543,7 +590,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 10,
   },
 
@@ -600,5 +647,25 @@ const styles = StyleSheet.create({
   picker: {
     color: "#fff",
     height: 80,
+  },
+  colLabel: {
+    width: 80,
+    justifyContent: "center",
+  },
+
+  colValue: {
+    width: 50,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+
+  colInput: {
+    width: 100,
+    alignItems: "center",
+  },
+
+  colButton: {
+    width: 80,
+    alignItems: "center",
   },
 });

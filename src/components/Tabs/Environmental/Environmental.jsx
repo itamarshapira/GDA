@@ -138,69 +138,77 @@ const Environmental = ({ device }) => {
   // UI RENDER
   // -------------------------------------------
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Environmental Sensing</Text>
+    <View style={styles.root}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="always"
+      >
+        <Text style={styles.header}>Environmental Sensing</Text>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        {error && <Text style={styles.error}>{error}</Text>}
 
-      {methane !== null ? (
-        <>
-          <View style={styles.methaneRow}>
-            <Text style={styles.text}>
-              Methane Concentration:{" "}
-              <Text style={styles.value}>{methane} LEL</Text>
+        {methane !== null ? (
+          <>
+            <View style={styles.methaneRow}>
+              <Text style={styles.text}>
+                Methane Concentration:{" "}
+                <Text style={styles.value}>{methane} LEL</Text>
+              </Text>
+
+              <TouchableOpacity
+                onPress={toggleMethaneNotify}
+                activeOpacity={0.2} // 👈 strong, visible feedback
+              >
+                <MaterialIcons
+                  name={notifyMethane ? "notifications" : "notifications-off"}
+                  size={32}
+                  color={notifyMethane ? "#04de71ff" : "#aea8a8ff"}
+                  style={{ marginBottom: 8 }}
+                />
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <Text style={styles.text}>Reading methane…</Text>
+        )}
+
+        {temperature !== null ? (
+          <>
+            <Text style={[styles.text, { marginTop: 18 }]}>
+              Temperature:{" "}
+              <Text style={styles.value}>{(temperature / 100).toFixed(2)}</Text>
             </Text>
-
-            <TouchableOpacity
-              onPress={toggleMethaneNotify}
-              activeOpacity={0.2} // 👈 strong, visible feedback
-            >
-              <MaterialIcons
-                name={notifyMethane ? "notifications" : "notifications-off"}
-                size={32}
-                color={notifyMethane ? "#04de71ff" : "#aea8a8ff"}
-                style={{ marginBottom: 8 }}
-              />
-            </TouchableOpacity>
-          </View>
-        </>
-      ) : (
-        <Text style={styles.text}>Reading methane…</Text>
-      )}
-
-      {temperature !== null ? (
-        <>
-          <Text style={[styles.text, { marginTop: 18 }]}>
-            Temperature:{" "}
-            <Text style={styles.value}>{(temperature / 100).toFixed(2)}</Text>
-          </Text>
-        </>
-      ) : (
-        <Text style={styles.text}>Reading temperature…</Text>
-      )}
-
-      {/* Measurement Interval quick set */}
+          </>
+        ) : (
+          <Text style={styles.text}>Reading temperature…</Text>
+        )}
+      </ScrollView>
+      {/* 🔘 STANDALONE INTERVAL BUTTONS (OUTSIDE ScrollView) */}
       {interval !== null && (
-        <View style={{ marginTop: 20, alignItems: "center" }}>
+        <View style={styles.intervalContainer}>
           <Text style={styles.text}>Set Measurement Interval:</Text>
 
           <View style={styles.buttonRow}>
             {[1, 3, 5, 10].map((sec) => (
-              <Text
+              <TouchableOpacity
                 key={sec}
-                style={[
-                  styles.intervalButton,
-                  interval === sec && styles.intervalActive,
-                ]}
                 onPress={() => handleSetInterval(sec)}
+                activeOpacity={0.6}
               >
-                {sec}s
-              </Text>
+                <View
+                  style={[
+                    styles.intervalButton,
+                    interval === sec && styles.intervalActive,
+                  ]}
+                >
+                  <Text style={{ color: "#fff", fontSize: 16 }}>{sec}s</Text>
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -214,6 +222,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 130, // ✅ space for buttons at bottom
   },
   header: {
     color: "#fff",
@@ -258,4 +268,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 15,
   },
+
+  root: {
+    flex: 1,
+  },
+
+  intervalContainer: {
+    paddingBottom: 10,
+    position: "absolute", // ✅ important
+    bottom: 0, // ✅ important
+    left: 0, // ✅ important
+    right: 0, // ✅ important
+    zIndex: 999, // ✅ important
+    elevation: 20, // ✅ Android: keep above
+    alignItems: "center",
+    backgroundColor: "#222", // same screen background
+  },
 });
+
+// Tal option for btn!!\
+// <MaterialIcons
+//               name={notifyMethane ? "stop" : "start"}
+//               size={32}
+//               color={notifyMethane ? "#e41a1aff" : "#0ee50be2"}
+//               style={{ marginBottom: 8 }}
+//             />

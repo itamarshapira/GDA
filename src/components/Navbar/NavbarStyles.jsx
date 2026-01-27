@@ -4,7 +4,9 @@ import { StyleSheet } from "react-native";
 const styles = StyleSheet.create({
   container: {
     height: 55, // height of the navbar
-    backgroundColor: "#b2b2f47c", // black background
+    //backgroundColor: "#b2b2f47c",
+    //backgroundColor: "#0d3d6dc1",
+    backgroundColor: "#082849e3",
     justifyContent: "space-between", // space between logo and icon
     // justifyContent: "center",   // center vertically
     alignItems: "center", // center horizontally
@@ -14,8 +16,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // space on both sides
     paddingTop: 4, //  some top padding
     //direction: 'ltr',     force left-to-right layout not need now.
+    // rounded corners only top
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
 
-    borderRadius: 10, // rounded corners
+    // borderRadius: 10, // rounded corners
   },
 
   logo: {
