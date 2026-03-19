@@ -14,8 +14,10 @@ export const DEVICE_INFORMATION_UUID = "0000180a-0000-1000-8000-00805f9b34fb"; /
 export const MANUFACTURER_UUID = "00002a29-0000-1000-8000-00805f9b34fb";
 export const MODEL_NUMBER_UUID = "00002a24-0000-1000-8000-00805f9b34fb";
 export const SYSTEM_ID_UUID = "00002a23-0000-1000-8000-00805f9b34fb";
-export const PRESENTATION_FORMAT_UUID = "00002a3d-0000-1000-8000-00805f9b34fb"; // ! this not used yet, but ok to keep
 export const SERIAL_NUMBER_UUID = "00002a25-0000-1000-8000-00805f9b34fb"; // Serial Number String NEW UUID 
+export const SSID_UUID = "00002a3d-0000-1000-8000-00805f9b34fb"; // Device IP NEW UUID
+export const DEVICE_IP_UUID = "00002a3d-0000-1000-8000-00805f9b34fb"; // Device IP NEW UUID
+
 
 // ✅ Alert Notification Service (0x1811)`
 export const ALERT_NOTIFICATION_UUID = "00001811-0000-1000-8000-00805f9b34fb"; // prime uuid for alert notification service
@@ -30,6 +32,7 @@ export const MEASUREMENT_INTERVAL_UUID = "00002a21-0000-1000-8000-00805f9b34fb";
 // ✅ Media Control Service (0x1848)
 export const MEDIA_CONTROL_UUID = "00001848-0000-1000-8000-00805f9b34fb";  // prime uuid for media control service
 export const MEDIA_CONTROL_POINT_UUID = "00002ba4-0000-1000-8000-00805f9b34fb";
+export const AXIS_COORDINATE_UUID = "00002aa1-0000-1000-8000-00805f9b34fb";
 
 // ✅ Custom FG Settings Service deviceSettings
 export const FG_SETTINGS_UUID = "1b7e8251-2877-41c3-b46e-cf057c562024"; // prime uuid for FG settings service

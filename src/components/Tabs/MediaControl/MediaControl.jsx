@@ -1,11 +1,13 @@
 // src/components/Tabs/MediaControl/MediaControl.jsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-
+import { MaterialIcons } from "@expo/vector-icons";
 import {
   readMediaControlState,
   writeMediaControlState,
+  readAxisRaw,
+  monitorAxis,
 } from "../../../services/mediaControlService";
 
 // Firmware enum
@@ -19,6 +21,10 @@ const MediaControl = ({ device }) => {
   const [state, setState] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  const [axis, setAxis] = useState(null);
+  const [notifyAxis, setNotifyAxis] = useState(false);
+  const axisSubRef = useRef(null);
 
   const refreshState = async () => {
     const value = await readMediaControlState(device);
@@ -36,6 +42,25 @@ const MediaControl = ({ device }) => {
 
     console.log("[MediaControl.jsx] 📖 Initial state read");
     refreshState();
+
+    readAxisRaw(device); // Debug log to check if we can read axis on mount
+    const loadAxis = async () => {
+      const axisData = await readAxisRaw(device);
+      if (axisData) {
+        setAxis(axisData);
+      }
+    };
+
+    loadAxis();
+
+    return () => {
+      console.log("[Axis] cleanup");
+
+      if (axisSubRef.current) {
+        axisSubRef.current.remove();
+        axisSubRef.current = null;
+      }
+    };
   }, [device]);
 
   // -------- Button handlers --------
@@ -81,6 +106,36 @@ const MediaControl = ({ device }) => {
     setBusy(false);
   };
 
+  const toggleAxisNotify = () => {
+    if (!device) return;
+
+    // OFF → ON
+    if (!notifyAxis) {
+      console.log("[Axis] ▶️ Start notify");
+
+      const sub = monitorAxis(device, (data) => {
+        setAxis(data);
+      });
+
+      if (sub) {
+        axisSubRef.current = sub;
+        setNotifyAxis(true);
+      }
+
+      return;
+    }
+
+    // ON → OFF
+    console.log("[Axis] ⏹️ Stop notify");
+
+    if (axisSubRef.current) {
+      axisSubRef.current.remove();
+      axisSubRef.current = null;
+    }
+
+    setNotifyAxis(false);
+  };
+
   // -------- UI --------
 
   const alignmentActive = state === 1;
@@ -120,6 +175,34 @@ const MediaControl = ({ device }) => {
           <Text style={styles.buttonText}>Zero Calibration</Text>
         </TouchableOpacity>
       </View>
+      {axis && (
+        <View style={{ marginTop: 20 }}>
+          <Text style={styles.stateText}>
+            G-Force:
+            {"\n"}X:{" "}
+            <Text style={styles.stateValue}>{axis.gx?.toFixed(3)}</Text>
+            {"  "}Y:{" "}
+            <Text style={styles.stateValue}>{axis.gy?.toFixed(3)}</Text>
+            {"  "}Z:{" "}
+            <Text style={styles.stateValue}>{axis.gz?.toFixed(3)}</Text>
+          </Text>
+          <View
+            style={{
+              flexDirection: "",
+              alignItems: "center",
+              paddingBottom: 20,
+            }}
+          >
+            <TouchableOpacity onPress={toggleAxisNotify} activeOpacity={0.2}>
+              <MaterialIcons
+                name={notifyAxis ? "notifications" : "notifications-off"}
+                size={32}
+                color={notifyAxis ? "#04de71ff" : "#aea8a8ff"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

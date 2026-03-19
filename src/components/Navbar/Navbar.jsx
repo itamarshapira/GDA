@@ -9,11 +9,14 @@ import {
   Animated,
   StyleSheet,
   ActivityIndicator, // ✅ NEW: for spinner/loading UI
+  Modal,
+  FlatList,
 } from "react-native";
 import styles from "./NavbarStyles";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // https://static.enapter.com/rn/icons/material-community.html
 import {
-  connectToDevice,
+  scanForFGDevices,
+  connectToSelectedDevice,
   disconnectDevice,
   logServicesAndCharacteristics,
   forceRefreshGatt,
@@ -26,6 +29,8 @@ const Navbar = (props) => {
   // props.onBleConnected, props.onBleDisconnected from App.js to inform connection state of BLE
   const [isBluetoothOn, setIsBluetoothOn] = useState(false); // Bluetooth icon state
   const [connectedDevice, setConnectedDevice] = useState(null); // Connected device state
+  const [foundDevices, setFoundDevices] = useState([]);
+  const [showPicker, setShowPicker] = useState(false);
 
   // ✅ NEW STATE: show loading banner while scanning/connecting
   // This gives user feedback (10 sec wait sometimes)
@@ -133,37 +138,33 @@ const Navbar = (props) => {
     setScanError(false); // ✅ optional: hide previous error toast if exists
 
     try {
-      const device = await connectToDevice();
-      if (!device) {
-        setIsConnecting(false); // ✅ NEW
+      const devices = await scanForFGDevices();
+
+      console.log(
+        "📋 FG devices found:",
+        devices.map((d) => d.name)
+      );
+      setFoundDevices(devices);
+      console.log("STATE DEVICES:", devices.length);
+      setShowPicker(true);
+      setIsConnecting(false);
+
+      if (!devices || devices.length === 0) {
+        console.log(
+          "🚫 No FG devices found — showing toast, not opening picker"
+        );
+        setIsConnecting(false);
+        setShowPicker(false);
+        showErrorToast();
         return;
       }
-
-      setConnectedDevice(device);
-      setIsBluetoothOn(true);
-
-      // ✅ Let App know we're connected and send the device
-      props.onBleConnected(device);
-      console.log("[Navbar] Notified App of BLE connection, sent device.");
-      console.log("[Navbar] now login1 can use the device to write passkey.");
-
-      // ✅ NEW: stop spinner when connected
-      setIsConnecting(false);
+      // TEMP: just log for now — no connect yet
     } catch (error) {
-      console.log("❌ Connection process failed:", error.message);
+      console.log("❌ Scan failed:", error.message);
 
-      // ✅ NEW: stop spinner when failed
       setIsConnecting(false);
-
-      setIsBluetoothOn(false);
-
-      // 👇 NEW LOGIC: Check for the specific device not found error
-      if (
-        error.message.includes("Device not found") ||
-        error.message.includes("Scan timeout")
-      ) {
-        showErrorToast();
-      }
+      setShowPicker(false); // ✅ make sure picker never opens
+      showErrorToast(); // ✅ reuse your existing red toast
     }
   };
 
@@ -223,6 +224,59 @@ const Navbar = (props) => {
           </Text>
         </Animated.View>
       )}
+      <Modal transparent visible={showPicker} animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            justifyContent: "center",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              margin: 20,
+              borderRadius: 10,
+              padding: 10,
+            }}
+          >
+            <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+              Select FG Device
+            </Text>
+
+            <FlatList
+              data={foundDevices}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{ padding: 12, borderBottomWidth: 1 }}
+                  onPress={async () => {
+                    try {
+                      setShowPicker(false);
+                      setIsConnecting(true);
+
+                      console.log("🔗 Connecting to selected:", item.name);
+
+                      const connected = await connectToSelectedDevice(item);
+
+                      setConnectedDevice(connected);
+                      setIsBluetoothOn(true);
+                      props.onBleConnected(connected);
+
+                      setIsConnecting(false);
+                    } catch (e) {
+                      console.log("❌ Selected connect failed:", e.message);
+                      setIsConnecting(false);
+                    }
+                  }}
+                >
+                  <Text>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

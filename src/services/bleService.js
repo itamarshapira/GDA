@@ -5,73 +5,94 @@ import { BleManager } from "react-native-ble-plx";
 // Create a shared BLE manager for the whole app
 export const manager = new BleManager();
 
+//* start here! 
+
 /**
- * Connects to the first FG device found.
+ * Connect to a device chosen by the user (keeps your current "important stuff"):
+ * - connect
+ * - discoverAllServicesAndCharacteristics
+ * - subscribe to Service Changed (0x1801 / 0x2A05)
+ * - optional logServicesAndCharacteristics
  */
-export async function connectToDevice() {
-  console.log(" Scanning for BLE devices... (bleService.js)");
-  let isConnected = false;
+export async function connectToSelectedDevice(device) {
+  try {
+    if (!device) {
+      console.log("❌ [connectToSelectedDevice] No device provided");
+      return null;
+    }
+
+    console.log(`🔗 Connecting to selected device: ${device.name || device.id}...`);
+
+    // Keep behavior close to your working code
+    const connectedDevice = await device.connect();
+    console.log(`✅ Connected to: ${connectedDevice.name}`);
+
+    await connectedDevice.discoverAllServicesAndCharacteristics();
+    console.log("🔎 Services & characteristics discovered");
+
+    // ✅ Enable Service Changed indication (0x2A05) — keep exactly like you had
+    const GENERIC_ATTRIBUTE_SERVICE = "00001801-0000-1000-8000-00805f9b34fb";
+    const SERVICE_CHANGED_CHAR = "00002a05-0000-1000-8000-00805f9b34fb";
+
+    connectedDevice.monitorCharacteristicForService(
+      GENERIC_ATTRIBUTE_SERVICE,
+      SERVICE_CHANGED_CHAR,
+      (error, characteristic) => {
+        if (error) {
+          console.log("[ServiceChanged] ❌ Error:", error.message);
+          return;
+        }
+        console.log("[ServiceChanged] ✅ Service Changed indication received!");
+      }
+    );
+
+    console.log("[ServiceChanged] ✅ Subscribed to Service Changed indications");
+
+    // Optional (you already do it)
+    await logServicesAndCharacteristics(connectedDevice);
+
+    return connectedDevice;
+  } catch (err) {
+    console.log("❌ [connectToSelectedDevice] Connection error:", err?.message || err);
+    return null;
+  }
+}
+
+/**
+ * Scan and return a LIST of FG devices (no auto connect)
+ */
+export function scanForFGDevices(timeoutMs = 8000) { // default 8 sec timeout 
+  console.log("🔍 [BLE] Scanning for FG devices...");
 
   return new Promise((resolve, reject) => {
-    manager.startDeviceScan(null, null, async (error, device) => {
+    const found = new Map(); // prevents duplicates
+
+    manager.startDeviceScan(null, null, (error, device) => {
       if (error) {
-        console.log(" Scan error:", error);
+        console.log("❌ Scan error:", error.message);
         manager.stopDeviceScan();
         reject(error);
         return;
       }
 
-      if (device && device.name && /^fg/i.test(device.name)) {
-        console.log(`✅ Found FG device: ${device.name}`);
-        manager.stopDeviceScan();
-
-        try {
-          console.log("🔗 Connecting...");
-          const connectedDevice = await device.connect();
-          console.log(`✅ Connected to: ${connectedDevice.name}`);
-          isConnected = true;
-
-          await connectedDevice.discoverAllServicesAndCharacteristics();
-          console.log("🔎 Services & characteristics discovered");
-
-// ✅ Enable Service Changed indication (0x2A05)
-const GENERIC_ATTRIBUTE_SERVICE = "00001801-0000-1000-8000-00805f9b34fb";
-const SERVICE_CHANGED_CHAR = "00002a05-0000-1000-8000-00805f9b34fb";
-
-connectedDevice.monitorCharacteristicForService(
-  GENERIC_ATTRIBUTE_SERVICE,
-  SERVICE_CHANGED_CHAR,
-  (error, characteristic) => {
-    if (error) {
-      console.log("[ServiceChanged] ❌ Error:", error.message);
-      return;
-    }
-    console.log("[ServiceChanged] ✅ Service Changed indication received!");
-  }
-);
-
-console.log("[ServiceChanged] ✅ Subscribed to Service Changed indications");
-
-
-          await logServicesAndCharacteristics(connectedDevice);
-          resolve(connectedDevice);
-          
-        } catch (err) {
-          console.log("❌ Connection error:", err);
-          reject(err);
-        }
+      if (device?.name && /^fg/i.test(device.name)) {
+        found.set(device.id, device); // dedupe by id
       }
     });
 
+    // Stop scan after timeout and return list
     setTimeout(() => {
-      if (!isConnected) {
-        console.log("⏱️ Scan timeout — device not found.");
-        manager.stopDeviceScan();
-        reject(new Error("Device not found"));
-      }
-    }, 30000);
+      manager.stopDeviceScan();
+
+      const devices = Array.from(found.values());
+
+      console.log(`✅ Scan finished. Found ${devices.length} FG devices`);
+
+      resolve(devices);
+    }, timeoutMs);
   });
 }
+
 
 /**
  * Disconnects from the connected BLE device.
@@ -114,6 +135,8 @@ export async function logServicesAndCharacteristics(device) {
         //const name = characteristicNames[char.uuid.toLowerCase()] || "Unknown";
         const charInfo = {
           uuid: char.uuid,
+          id: char.id, // <-- ADD THIS (instance identifier)
+           serviceUUID: char.serviceUUID, // helpful for debugging
           isReadable: char.isReadable,
           isWritableWithResponse: char.isWritableWithResponse,
           isWritableWithoutResponse: char.isWritableWithoutResponse,
@@ -127,6 +150,7 @@ export async function logServicesAndCharacteristics(device) {
         // 🔍 Optional logging for each char (can remove later)
         console.log(`Service: ${service.uuid}`);
         console.log(`   Characteristic: ${char.uuid}`);
+        console.log(`      Instance ID: ${char.id}`);
         console.log(`      Properties:`,
           char.isReadable ? "READ " : "",
           char.isWritableWithResponse ? "WRITE " : "",

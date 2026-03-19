@@ -15,6 +15,7 @@
 import {
   MEDIA_CONTROL_UUID,
   MEDIA_CONTROL_POINT_UUID,
+  AXIS_COORDINATE_UUID
 } from "./bleUuidLabels";
 
 import {
@@ -80,3 +81,108 @@ export async function writeMediaControlState(device, value) {
     return false;
   }
 }
+
+/**
+ * Read Axis Coordinates (X/Y/Z) raw
+ * We first log bytes to understand firmware format.
+ */
+export async function readAxisRaw(device) {
+  if (!device) {
+    console.log("[Axis] ❌ No device");
+    return null;
+  }
+
+  try {
+    console.log("[Axis] 📖 Reading raw axis data...");
+
+    const char = await device.readCharacteristicForService(
+      MEDIA_CONTROL_UUID,
+      AXIS_COORDINATE_UUID
+    );
+
+    if (!char?.value) return null;
+
+   const bytes = Buffer.from(char.value, "base64");
+
+console.log("[AxisService] Raw bytes:", bytes);
+console.log("[AxisService] Hex:", bytes.toString("hex"));
+
+// Decode as Int16 Little Endian
+if (bytes.length >= 6) {
+  const x = bytes.readInt16LE(0);
+  const y = bytes.readInt16LE(2);
+  const z = bytes.readInt16LE(4);
+
+  console.log("[AxisService] Decoded:", { x, y, z });
+
+  // --- Add G-force conversion ---
+  // Common IMU scale (we verify if correct)
+  const SCALE = 20000;
+
+  const gx = x / SCALE;
+  const gy = y / SCALE;
+  const gz = z / SCALE;
+
+  console.log("[AxisService] Raw:", { x, y, z });
+  console.log("[AxisService] G-force:", { gx, gy, gz });
+
+  return { x, y, z, gx, gy, gz };
+}
+  } catch (err) {
+    console.log("[AxisService] ❌ Read failed:", err.message);
+    return null;
+  }
+}
+
+/**
+ * Monitor Axis G-force (X/Y/Z) using NOTIFY
+ * Returns subscription (must remove() to stop)
+ */
+export const monitorAxis = (device, onValue) => {
+  if (!device) {
+    console.log("[AxisService] ❌ No device for monitor");
+    return null;
+  }
+
+  console.log("[AxisService] 📡 Subscribing to Axis notify...");
+
+  const subscription = device.monitorCharacteristicForService(
+    MEDIA_CONTROL_UUID,
+    AXIS_COORDINATE_UUID,
+    (error, characteristic) => {
+      if (error) {
+        console.log("[AxisService] ❌ Notify error:", error.message);
+        return;
+      }
+
+      if (!characteristic?.value) return;
+
+      try {
+        const bytes = Buffer.from(characteristic.value, "base64");
+
+        if (bytes.length < 6) return;
+
+        const x = bytes.readInt16LE(0);
+        const y = bytes.readInt16LE(2);
+        const z = bytes.readInt16LE(4);
+
+        const SCALE = 20000;
+
+        const gx = x / SCALE;
+        const gy = y / SCALE;
+        const gz = z / SCALE;
+
+        console.log("[AxisService] 🔔 Notify:", { gx, gy, gz });
+
+        if (typeof onValue === "function") {
+          onValue({ x, y, z, gx, gy, gz });
+        }
+      } catch (e) {
+        console.log("[AxisService] Decode failed:", e.message);
+      }
+    }
+  );
+
+  return subscription;
+};
+
