@@ -15,7 +15,8 @@
 import {
   MEDIA_CONTROL_UUID,
   MEDIA_CONTROL_POINT_UUID,
-  AXIS_COORDINATE_UUID
+  AXIS_COORDINATE_UUID,
+  RESOLUTION_CONTROL_UUID,
 } from "./bleUuidLabels";
 
 import {
@@ -186,3 +187,38 @@ export const monitorAxis = (device, onValue) => {
   return subscription;
 };
 
+/**
+ * Write video resolution command to the MCU.
+ *
+ * Values:
+ * 0 = LOW  -> RPI maps to FoV 4   -> 640x480
+ * 1 = HIGH -> RPI maps to FoV 100 -> Full
+ */
+export async function writeResolutionControl(device, value) {
+  if (!device) {
+    console.log("[ResolutionControl] ❌ No device");
+    return false;
+  }
+
+  if (value !== 0 && value !== 1) {
+    console.log("[ResolutionControl] ❌ Invalid value:", value);
+    return false;
+  }
+
+  try {
+    console.log("[ResolutionControl] ✍️ Writing resolution value:", value);
+
+    const ok = await writeUint8Characteristic(
+      device,
+      MEDIA_CONTROL_UUID,
+      RESOLUTION_CONTROL_UUID,
+      value
+    );
+
+    console.log("[ResolutionControl] ✅ Write result:", ok);
+    return ok;
+  } catch (err) {
+    console.log("[ResolutionControl] ❌ Failed to write:", err.message);
+    return false;
+  }
+}

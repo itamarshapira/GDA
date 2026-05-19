@@ -1,3 +1,13 @@
+/*
+  VideoStream.jsx
+  App opens VideoStream
+→ WebView loads http://fgcam:admin@10.42.0.1/live_mjpeg.html
+→ WebView gets/authenticates access
+→ onLoadEnd switches to http://10.42.0.1/live_mjpeg.html
+→ page fetches live2.mjpeg
+→ video appears
+*/
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -8,14 +18,23 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
+import DigestFetch from "react-native-digest-fetch";
 
-const HEALTH_URL = "http://192.168.4.1/video_feed";
+// First URL: used only to "warm up" authentication.
+// Warning: username/password in URL can appear in logs, so this is for testing/workaround.
+const AUTH_WARMUP_URL = "http://fgcam:admin@10.42.0.1/live_mjpeg.html";
+
+// Second URL: the real page we want to show after auth is accepted.
+const VIDEO_URL = "http://10.42.0.1/live_mjpeg.html";
 
 const VideoStream = () => {
-  const [videoKey, setVideoKey] = useState(0); // Key to force remount WebView
+  const [currentUrl, setCurrentUrl] = useState(AUTH_WARMUP_URL); // WebView first loads the auth warm-up URL.
+  const [videoKey, setVideoKey] = useState(0); // Key to force WebView reload when URL changes.
 
   const refreshVideo = () => {
-    console.log("[VideoStream] 🔄 Refreshing video");
+    // This function can be called to refresh the video stream, re-triggering the auth warm-up process.
+    console.log("[VideoStream] Refreshing video with auth warm-up");
+    setCurrentUrl(AUTH_WARMUP_URL);
     setVideoKey((prev) => prev + 1);
   };
 
@@ -23,7 +42,23 @@ const VideoStream = () => {
 
   useEffect(() => {
     console.log("🧩 [VideoStream] mounted");
-    return () => console.log("🧹 [VideoStream] unmounted");
+
+    // Auto-refresh one time after the component opens.
+    // Why: this imitates the user pressing the refresh button once.
+    const autoRefreshTimer = setTimeout(() => {
+      console.log("[VideoStream] Auto refresh once after mount");
+
+      // Start again from the auth warm-up URL.
+      setCurrentUrl(AUTH_WARMUP_URL);
+
+      // Force WebView to fully remount.
+      setVideoKey((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      clearTimeout(autoRefreshTimer);
+      console.log("🧹 [VideoStream] unmounted");
+    };
   }, []);
 
   return (
@@ -41,10 +76,30 @@ const VideoStream = () => {
       <View style={styles.videoWrapper}>
         <WebView
           key={videoKey}
-          source={{ uri: HEALTH_URL }}
+          source={{ uri: currentUrl }}
           style={styles.webview}
           originWhitelist={["*"]}
           mixedContentMode="always"
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          onLoadEnd={() => {
+            // This event fires when the page finishes loading (successfully or with an error).
+            console.log("[WebView] Loaded:", currentUrl);
+
+            // After the auth warm-up page loads, switch to the clean normal URL.
+            if (currentUrl === AUTH_WARMUP_URL) {
+              console.log(
+                "[WebView] Auth warm-up finished, switching to normal URL",
+              );
+              setCurrentUrl(VIDEO_URL);
+            }
+          }}
+          onHttpError={(event) => {
+            console.log("[WebView] HTTP error:", event.nativeEvent.statusCode);
+          }}
+          onError={(event) => {
+            console.log("[WebView] Error:", event.nativeEvent);
+          }}
         />
 
         <TouchableOpacity

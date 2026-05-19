@@ -33,6 +33,8 @@ export const MEASUREMENT_INTERVAL_UUID = "00002a21-0000-1000-8000-00805f9b34fb";
 export const MEDIA_CONTROL_UUID = "00001848-0000-1000-8000-00805f9b34fb";  // prime uuid for media control service
 export const MEDIA_CONTROL_POINT_UUID = "00002ba4-0000-1000-8000-00805f9b34fb";
 export const AXIS_COORDINATE_UUID = "00002aa1-0000-1000-8000-00805f9b34fb";
+export const RESOLUTION_CONTROL_UUID = "00002ab6-0000-1000-8000-00805f9b34fb"; // new resolution control characteristic uuid
+ 
 
 // ✅ Custom FG Settings Service deviceSettings
 export const FG_SETTINGS_UUID = "1b7e8251-2877-41c3-b46e-cf057c562024"; // prime uuid for FG settings service

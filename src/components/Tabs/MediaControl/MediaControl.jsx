@@ -1,13 +1,20 @@
 // src/components/Tabs/MediaControl/MediaControl.jsx
 
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
   readMediaControlState,
   writeMediaControlState,
   readAxisRaw,
   monitorAxis,
+  writeResolutionControl,
 } from "../../../services/mediaControlService";
 
 // Firmware enum
@@ -106,6 +113,32 @@ const MediaControl = ({ device }) => {
     setBusy(false);
   };
 
+  const [selectedResolution, setSelectedResolution] = useState(null); // For UI feedback on selected resolution
+
+  const handleResolutionPress = async (value) => {
+    if (!device || busy) return;
+
+    setBusy(true);
+    setError(null);
+
+    console.log("[MediaControl] 💾 Resolution pressed →", value);
+
+    const ok = await writeResolutionControl(device, value);
+
+    if (!ok) {
+      setError("Failed to write Resolution");
+      setBusy(false);
+      return;
+    }
+
+    // Save selected button only after BLE write succeeds.
+    setSelectedResolution(value);
+
+    console.log("[MediaControl] ✅ Resolution write completed:", value);
+
+    setBusy(false);
+  };
+
   const toggleAxisNotify = () => {
     if (!device) return;
 
@@ -142,7 +175,11 @@ const MediaControl = ({ device }) => {
   const zeroDisabled = state === 1 || busy;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.header}>Device Control</Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -175,6 +212,39 @@ const MediaControl = ({ device }) => {
           <Text style={styles.buttonText}>Zero Calibration</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.resolutionBox}>
+        <Text style={styles.resolutionLabel}>Zoom</Text>{" "}
+        {/* is resolution just changing the name to zoom */}
+        <View style={styles.resolutionButtonsRow}>
+          <TouchableOpacity
+            style={[
+              styles.compactButton,
+              selectedResolution === 0 && styles.resolutionActive,
+              busy && styles.buttonDisabled,
+            ]}
+            onPress={() => handleResolutionPress(0)}
+            disabled={busy}
+          >
+            <Text style={styles.compactButtonText}>Zoom In</Text>{" "}
+            {/*is high -> 1 -> 100*/}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.compactButton,
+              selectedResolution === 1 && styles.resolutionActive,
+              busy && styles.buttonDisabled,
+            ]}
+            onPress={() => handleResolutionPress(1)}
+            disabled={busy}
+          >
+            <Text style={styles.compactButtonText}>Zoom Out</Text>{" "}
+            {/*is low -> 0 -> 4*/}
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {axis && (
         <View style={{ marginTop: 20 }}>
           <Text style={styles.stateText}>
@@ -203,7 +273,7 @@ const MediaControl = ({ device }) => {
           </View>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -254,5 +324,39 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 15,
+  },
+  resolutionBox: {
+    marginTop: 14,
+    alignItems: "center",
+  },
+
+  resolutionLabel: {
+    color: "#ccc",
+    fontSize: 15,
+    marginBottom: 8,
+  },
+
+  resolutionButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  compactButton: {
+    backgroundColor: "#333",
+    paddingVertical: 9,
+    width: 110,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+
+  compactButtonText: {
+    color: "#fff",
+    fontSize: 15,
+  },
+  scroll: {
+    width: "100%",
+  },
+  resolutionActive: {
+    backgroundColor: "#4b4bbf",
   },
 });
