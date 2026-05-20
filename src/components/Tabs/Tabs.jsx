@@ -18,6 +18,10 @@ import AlertBanner from "../AlertBanner/AlertBanner";
 const Tabs = ({ device }) => {
   const [selectedTab, setSelectedTab] = useState("alert");
 
+  // This key is used to tell VideoStream to refresh/remount.
+  // When resolution changes, we increment this value.
+  const [videoRefreshKey, setVideoRefreshKey] = useState(0);
+
   const TabButton = (id, label) => (
     <TouchableOpacity key={id} onPress={() => setSelectedTab(id)}>
       <Text style={[styles.menuItem, selectedTab === id && styles.active]}>
@@ -33,7 +37,7 @@ const Tabs = ({ device }) => {
       {/* Top Half */}
       {selectedTab !== "settings" && (
         <View style={styles.videoContainer}>
-          <VideoStream />
+          <VideoStream refreshKey={videoRefreshKey} />
         </View>
       )}
 
@@ -95,7 +99,15 @@ const Tabs = ({ device }) => {
           </View>
 
           {selectedTab === "settings" && <DeviceSettings device={device} />}
-          {selectedTab === "mediaControl" && <MediaControl device={device} />}
+          {selectedTab === "mediaControl" && (
+            <MediaControl
+              device={device}
+              onResolutionChanged={() => {
+                console.log("[Tabs] Resolution changed → refreshing video");
+                setVideoRefreshKey((prev) => prev + 1);
+              }}
+            />
+          )}
 
           {selectedTab === "battery" && (
             <Text style={styles.fakeText}>Battery Coming Soon </Text>

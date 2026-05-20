@@ -24,7 +24,7 @@ const MEDIA_CONTROL_MAP = {
   2: "Zero Calibration",
 };
 
-const MediaControl = ({ device }) => {
+const MediaControl = ({ device, onResolutionChanged }) => {
   const [state, setState] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -133,6 +133,17 @@ const MediaControl = ({ device }) => {
 
     // Save selected button only after BLE write succeeds.
     setSelectedResolution(value);
+
+    // Wait 1 second before refreshing the video.
+    // Why: the RPI needs a little time to apply FoV/reload the stream.
+    // How: after the delay, we notify Tabs.jsx, and Tabs triggers VideoStream refresh.
+    setTimeout(() => {
+      console.log("[MediaControl] ⏱️ Refreshing video after resolution change");
+
+      if (onResolutionChanged) {
+        onResolutionChanged();
+      }
+    }, 5000); // Increased delay to 5 seconds to give the RPI more time to apply changes and stabilize the stream.
 
     console.log("[MediaControl] ✅ Resolution write completed:", value);
 

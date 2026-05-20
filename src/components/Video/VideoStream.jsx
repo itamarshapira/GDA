@@ -27,7 +27,7 @@ const AUTH_WARMUP_URL = "http://fgcam:admin@10.42.0.1/live_mjpeg.html";
 // Second URL: the real page we want to show after auth is accepted.
 const VIDEO_URL = "http://10.42.0.1/live_mjpeg.html";
 
-const VideoStream = () => {
+const VideoStream = ({ refreshKey }) => {
   const [currentUrl, setCurrentUrl] = useState(AUTH_WARMUP_URL); // WebView first loads the auth warm-up URL.
   const [videoKey, setVideoKey] = useState(0); // Key to force WebView reload when URL changes.
 
@@ -60,6 +60,19 @@ const VideoStream = () => {
       console.log("🧹 [VideoStream] unmounted");
     };
   }, []);
+
+  useEffect(() => {
+    // This runs when Tabs.jsx changes refreshKey.
+    // Why: after resolution changes on the RPI, the current video page/stream
+    // may still show the old stream until we reconnect.
+    // How: we reuse the same auth warm-up flow as the refresh button.
+    if (refreshKey === undefined) return;
+
+    console.log("[VideoStream] refreshKey changed → reload video:", refreshKey);
+
+    setCurrentUrl(AUTH_WARMUP_URL);
+    setVideoKey((prev) => prev + 1);
+  }, [refreshKey]);
 
   return (
     <View style={styles.container}>
