@@ -15,6 +15,7 @@ import MediaControl from "./MediaControl/MediaControl";
 import AlertNotification from "./AlertNotification/AlertNotification";
 import VideoStream from "../Video/VideoStream";
 import AlertBanner from "../AlertBanner/AlertBanner";
+import { LinearGradient } from "expo-linear-gradient";
 const Tabs = ({ device }) => {
   const [selectedTab, setSelectedTab] = useState("alert");
 
@@ -22,13 +23,38 @@ const Tabs = ({ device }) => {
   // When resolution changes, we increment this value.
   const [videoRefreshKey, setVideoRefreshKey] = useState(0);
 
-  const TabButton = (id, label) => (
-    <TouchableOpacity key={id} onPress={() => setSelectedTab(id)}>
-      <Text style={[styles.menuItem, selectedTab === id && styles.active]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
+  const TabButton = (id, label) => {
+    const isActive = selectedTab === id;
+
+    return (
+      <TouchableOpacity
+        key={id}
+        onPress={() => setSelectedTab(id)}
+        activeOpacity={0.75}
+      >
+        {isActive ? (
+          /*
+          Active tab uses LinearGradient.
+
+        */
+          <LinearGradient
+            colors={[
+              "rgba(120, 200, 255, 0.95)", // light sky blue
+              "rgba(47, 128, 237, 0.95)", // FGD blue
+              "rgba(53, 93, 163, 0.95)", // deeper blue edge
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.activeGradient}
+          >
+            <Text style={[styles.menuItem, styles.activeText]}>{label}</Text>
+          </LinearGradient>
+        ) : (
+          <Text style={styles.menuItem}>{label}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const [alertStatus, setAlertStatus] = useState(null); // State for alert status and alert banner origanlly create in AlertNotification.jsx
 
@@ -145,38 +171,62 @@ const styles = StyleSheet.create({
 
   bottomContainer: {
     flex: 1,
-    backgroundColor: "#222",
+    backgroundColor: "#07111f",
     //alignItems: "stretch",      // <- ensures children expand correctly
   },
 
-  /* scroll menu */
   tabMenu: {
-    height: 40,
+    height: 50,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 8,
-    backgroundColor: "#333",
+    paddingHorizontal: 10,
+
+    // Dark navy, matching the dashboard/video style.
+    backgroundColor: "#07111f",
+
+    // Slight top/bottom separation so the menu feels like its own control strip.
+    borderTopWidth: 1,
+    borderTopColor: "rgba(66, 153, 225, 0.10)",
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "rgba(66, 153, 225, 0.22)",
   },
 
+  // Normal tab text.
+  // Why:
+  // - Soft white keeps inactive tabs readable but not too strong.
   menuItem: {
-    color: "#bbb",
-    fontSize: 15,
-    paddingHorizontal: 12,
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 14,
+    fontWeight: "600",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
 
-  active: {
-    color: "#b2b2f4ff",
-    fontWeight: "bold",
-    textDecorationLine: "underline",
+  // Gradient wrapper for the selected tab.
+  // Why:
+  // - The gradient must be on a View-like component, not directly on Text.
+  // - This creates the selected pill shape.
+  activeGradient: {
+    borderRadius: 999,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+
+  // Active tab text.
+  // Why:
+  // - Text stays white and bold over the blue gradient.
+  activeText: {
+    color: "#ffffff",
+    fontWeight: "800",
   },
 
   screenArea: {
     // area where tab content shows - could came from the component itself
     flex: 18, // 18 full?
 
-    //backgroundColor: "#751414ff",
+    backgroundColor: "#07111f",
 
     // paddingHorizontal: 10,
     // paddingVertical: 6,
@@ -189,11 +239,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   alertWrapper: {
-    backgroundColor: "#222",
+    backgroundColor: "#07111f",
     //justifyContent: "center",
     //alignItems: "center"
     //paddingVertical: 0,
     borderBottomWidth: 1,
-    borderBottomColor: "#444444ff", // subtle separator from tabs
+    borderBottomColor: "rgba(66, 153, 225, 0.25)", // subtle separator from tabs
   },
 });

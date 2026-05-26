@@ -559,113 +559,164 @@ const DeviceSettings = ({ device }) => {
 export default DeviceSettings;
 
 const styles = StyleSheet.create({
+  // Main scroll content.
+  // Why:
+  // - Matches the new FGD dashboard style.
+  // - alignItems: "stretch" lets rows use full width cleanly.
   container: {
     flexGrow: 1,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "stretch",
+    paddingHorizontal: 16,
+    paddingTop: 18,
     paddingBottom: 50,
-    marginBottom: 80,
+    backgroundColor: "#07111f",
   },
+
   header: {
-    color: "#fff",
-    fontSize: 22,
-    marginBottom: 20,
-    fontWeight: "bold",
+    color: "#ffffff",
+    fontSize: 24,
+    marginBottom: 16,
+    fontWeight: "800",
+    textAlign: "center",
   },
+
   text: {
-    color: "#ccc",
-    fontSize: 18,
+    color: "rgba(255,255,255,0.70)",
+    fontSize: 16,
     marginBottom: 8,
+    textAlign: "center",
+    fontWeight: "700",
   },
-  //   value: {
-  //     color: "#b2b2f4ff",
-  //     fontWeight: "bold",
-  //   },
+
   error: {
-    color: "tomato",
+    color: "#ff6b6b",
     marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "700",
   },
+
+  // Each setting row.
+  // Why:
+  // - Makes every setting look like a compact dashboard strip.
+  // - Keeps label, current value, input, and save button in one line.
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-    paddingVertical: 10,
+    gap: 8,
+    marginBottom: 10,
+    paddingVertical: 9,
     paddingHorizontal: 10,
+
+    backgroundColor: "rgba(13, 27, 47, 0.88)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.26)",
   },
 
-  input: {
-    backgroundColor: "#333",
-    color: "#fff",
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    height: 40,
-    textAlign: "center",
-    fontSize: 15,
-  },
-
-  saveButton: {
-    height: 40,
-    paddingHorizontal: 18,
-    backgroundColor: "#333",
-    borderRadius: 6,
+  // Label column.
+  // Why:
+  // - Fixed width keeps rows aligned.
+  // - Slightly smaller font prevents long labels from breaking layout.
+  colLabel: {
+    width: 85,
     justifyContent: "center",
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "white",
-    fontSize: 14,
-  },
-
-  labelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: 150, // 🔒 fixed column width
   },
 
   label: {
-    color: "#ccc",
-    fontSize: 18,
-    marginRight: 6,
+    color: "rgba(255,255,255,0.76)",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  // Current value column.
+  // Why:
+  // - Shows confirmed value from the device.
+  colValue: {
+    width: 48,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   value: {
-    color: "#b2b2f4ff",
-    fontWeight: "bold",
-    fontSize: 18,
+    color: "#b2d9ff",
+    fontWeight: "900",
+    fontSize: 16,
   },
 
-  pickerWrapper: {
-    backgroundColor: "#333",
-    borderRadius: 6,
-    height: 40,
+  // Input column.
+  colInput: {
+    flex: 1,
+    alignItems: "stretch",
+  },
+
+  // Editable input.
+  // Why:
+  // - Dark navy input matches the new style.
+  // - Blue border shows it belongs to the FGD UI.
+  input: {
+    backgroundColor: "rgba(7, 17, 31, 0.95)",
+    color: "#ffffff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.24)",
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    height: 38,
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  // Button column.
+  colButton: {
+    width: 68,
+    alignItems: "center",
+  },
+
+  // Save button.
+  // Why:
+  // - Uses FGD blue instead of old gray.
+  // - Small pill style fits compact rows.
+  saveButton: {
+    height: 38,
+    paddingHorizontal: 14,
+    backgroundColor: "#2f80ed",
+    borderRadius: 999,
     justifyContent: "center",
-    width: 160,
+    alignItems: "center",
+  },
+
+  saveButtonText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  // Gas type label container.
+  // Why:
+  // - Kept because Gas Type row uses a different JSX structure.
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: 92,
+  },
+
+  // Picker wrapper.
+  // Why:
+  // - Makes the picker match the same dark/blue style.
+  pickerWrapper: {
+    flex: 1,
+    backgroundColor: "rgba(7, 17, 31, 0.95)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.24)",
+    height: 42,
+    justifyContent: "center",
   },
 
   picker: {
-    color: "#fff",
+    color: "#ffffff",
     height: 80,
-  },
-  colLabel: {
-    width: 80,
-    justifyContent: "center",
-  },
-
-  colValue: {
-    width: 50,
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-
-  colInput: {
-    width: 100,
-    alignItems: "center",
-  },
-
-  colButton: {
-    width: 80,
-    alignItems: "center",
   },
 });

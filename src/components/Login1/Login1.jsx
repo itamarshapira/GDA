@@ -75,8 +75,8 @@ const Login1 = ({ device, onLogin }) => {
     <View style={styles.container}>
       {/* ✅ Card wrapper: gives the login a "panel" look */}
       <View style={styles.card}>
-        <Text style={styles.title}>Enter Passkey</Text>
-        <Text style={styles.subtitle}>Type the device passkey to continue</Text>
+        <Text style={styles.title}>FGAS Login</Text>
+        <Text style={styles.subtitle}>Enter detector passkey</Text>
 
         <TextInput
           style={styles.input}
@@ -98,7 +98,7 @@ const Login1 = ({ device, onLogin }) => {
         >
           {isLoading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator color="#0b0f0c" />
+              <ActivityIndicator color="#ffffff" />
               <Text style={styles.buttonText}>Logging in...</Text>
             </View>
           ) : (
@@ -117,103 +117,135 @@ const Login1 = ({ device, onLogin }) => {
 export default Login1;
 
 const styles = StyleSheet.create({
-  // Background canvas (kept dark + centered)
+  // Main screen background.
+  // Why:
+  // - Uses dark navy instead of neutral black.
+  // - Feels closer to a technical FGD system UI.
   container: {
     flex: 1,
-    justifyContent: "center", //
-    alignItems: "center", // ✅ centers horizontally
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 18,
-    backgroundColor: "#0f1115",
+    backgroundColor: "#07111f",
   },
 
-  // The actual "card"
+  // Login card / panel.
+  // Why:
+  // - Looks like a clean control panel.
+  // - Blue border connects it visually to the FGD app colors.
   card: {
     width: "100%",
     maxWidth: 420,
     alignSelf: "center",
-    backgroundColor: "#171a21",
-    borderRadius: 18,
+    backgroundColor: "#0d1b2f",
+    borderRadius: 22,
     paddingVertical: 42,
-    paddingHorizontal: 38,
+    paddingHorizontal: 34,
     marginBottom: 180,
 
-    // // iOS shadow
-    // shadowColor: "#000",
-    // shadowOpacity: 0.35,
-    // shadowRadius: 18,
-    // shadowOffset: { width: 0, height: 10 },
-
-    // Android elevation
+    // Android shadow.
     elevation: 10,
 
-    // Subtle border to separate from background
+    // Blue/white FGD-style border.
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.41)",
+    borderColor: "rgba(66, 153, 225, 0.45)",
   },
 
+  // Main title.
+  // Why:
+  // - White and bold for clear hierarchy.
   title: {
     color: "#ffffff",
-
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
     marginBottom: 6,
+    textAlign: "center",
   },
 
+  // Small explanation under the title.
+  // Why:
+  // - Softer white keeps it readable but not too strong.
   subtitle: {
-    color: "rgba(255,255,255,0.65)",
+    color: "rgba(255,255,255,0.70)",
     marginTop: 6,
-    marginBottom: 18,
+    marginBottom: 22,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 20,
+    textAlign: "center",
   },
 
+  // Passkey input.
+  // Why:
+  // - Dark input fits the card.
+  // - Blue border makes it feel connected to the app theme.
   input: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(66, 153, 225, 0.35)",
     borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    color: "#fff",
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    color: "#ffffff",
     fontSize: 16,
-    backgroundColor: "#0f1115",
+    backgroundColor: "#07111f",
   },
 
+  // Primary login button.
+  // Why:
+  // - Blue replaces green, so the screen matches FGD colors.
+  // - Still strong enough to show this is the main action.
   button: {
     width: "100%",
     marginTop: 24,
     borderRadius: 14,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
-    backgroundColor: "#22c55e",
+    backgroundColor: "#2f80ed",
   },
 
+  // Used while login is running.
+  // Why:
+  // - Shows the user they cannot press again while BLE login is in progress.
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.65,
   },
 
+  // Button text.
+  // Why:
+  // - White works better on blue than dark text.
   buttonText: {
-    color: "#0b0f0c",
+    color: "#ffffff",
     fontSize: 16,
     fontWeight: "800",
   },
 
+  // Loading spinner + text row.
+  // Why:
+  // - Keeps spinner and text aligned nicely.
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
 
+  // Error message.
+  // Why:
+  // - Red stays because errors must be obvious.
   error: {
     marginTop: 10,
-    color: "#ff5a5a",
+    color: "#ff6b6b",
     fontWeight: "700",
+    textAlign: "center",
   },
 
+  // Small helper text when no BLE device exists.
+  // Why:
+  // - Soft white avoids making it look like an error.
   hint: {
     marginTop: 14,
-    color: "rgba(255,255,255,0.55)",
+    color: "rgba(255,255,255,0.60)",
     fontSize: 13,
+    textAlign: "center",
   },
 });

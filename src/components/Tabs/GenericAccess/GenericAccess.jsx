@@ -35,7 +35,7 @@ const GenericAccess = ({ device }) => {
       style={styles.scrollArea}
       contentContainerStyle={styles.content}
     >
-      <Text style={styles.header}>Generic Access Service</Text>
+      <Text style={styles.header}>Generic Access </Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -60,35 +60,61 @@ const GenericAccess = ({ device }) => {
 };
 
 const styles = StyleSheet.create({
+  // Full screen background.
+  // Why:
+  // - Matches the FGD dark navy dashboard style.
+  // - Keeps Generic Access visually consistent with Device Info.
   scrollArea: {
     flex: 1,
-    // backgroundColor: "rgb(40,40,40)",
+    backgroundColor: "#07111f",
   },
+
+  // Inner content area.
+  // Why:
+  // - alignItems: "stretch" allows info rows to use full width.
+  // - This makes the screen feel like a dashboard panel instead of loose text.
   content: {
-    paddingVertical: 20,
-    paddingHorizontal: 12,
-    alignItems: "center", // align center horizontally
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "stretch",
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 40,
   },
+
   header: {
-    color: "#fff",
+    color: "#ffffff",
     fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+    fontWeight: "800",
+    marginBottom: 16,
+    textAlign: "center",
   },
+
   text: {
-    color: "#ccc",
-    fontSize: 18,
-    //merginTop: 18,
-    marginBottom: 18,
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+
+    backgroundColor: "rgba(13, 27, 47, 0.88)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.26)",
   },
+
   info: {
-    color: "#b2b2f4ff",
-    fontWeight: "bold",
+    color: "#b2d9ff",
+    fontWeight: "900",
   },
+
   error: {
-    color: "tomato",
+    color: "#ff6b6b",
     fontSize: 16,
     marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "700",
   },
 });
 

@@ -13,6 +13,7 @@ import {
   readTemperature,
   readMeasurementInterval,
   monitorMethaneNotifications,
+  monitorTemperatureNotifications,
   writeMeasurementInterval,
 } from "../../../services/environmentalService";
 
@@ -25,10 +26,12 @@ const Environmental = ({ device }) => {
 
   // NOTIFY toggle state
   const [notifyMethane, setNotifyMethane] = useState(false);
+  const [notifyTemperature, setNotifyTemperature] = useState(false);
 
   // Refs for stable subscription + live toggle flag
   const methaneSubRef = useRef(null); // stores subscription (never removed)
-  const isLiveRef = useRef(false); // true = update UI, false = ignore
+  //const isLiveRef = useRef(false); // true = update UI, false = ignore
+  const temperatureSubRef = useRef(null);
 
   // -------------------------------------------
   // SAFE TOGGLE FOR METHANE NOTIFY (NO CRASH)
@@ -54,7 +57,7 @@ const Environmental = ({ device }) => {
 
     // ON → OFF
     console.log(
-      "[Environmental] ⏹️ Disabling LIVE methane updates (hard stop)..."
+      "[Environmental] ⏹️ Disabling LIVE methane updates (hard stop)...",
     );
 
     if (methaneSubRef.current) {
@@ -66,12 +69,68 @@ const Environmental = ({ device }) => {
   };
 
   // -------------------------------------------
+  // SAFE TOGGLE FOR TEMPERATURE NOTIFY
+  // -------------------------------------------
+  const toggleTemperatureNotify = () => {
+    console.log("[Environmental] Toggling temperature notify...");
+
+    // OFF → ON
+    // If temperature notify is currently OFF, we start listening to live BLE updates.
+    if (!notifyTemperature) {
+      console.log("[Environmental] ▶️ Enabling LIVE temperature updates...");
+
+      // Safety check:
+      // Without a connected BLE device, we cannot subscribe to notifications.
+      if (!device) {
+        console.log(
+          "[Environmental] ❌ Cannot enable temperature notify — no device",
+        );
+        return;
+      }
+
+      // Start BLE notification for temperature.
+      // Every time the device sends a new temperature value,
+      // this callback runs and updates the UI state.
+      const sub = monitorTemperatureNotifications(device, (value) => {
+        console.log("[Environmental] 🔔 LIVE temperature raw:", value);
+
+        // Store the raw value.
+        // In the UI we divide by 100 before displaying Celsius.
+        setTemperature(value);
+      });
+
+      // Store the subscription so we can remove it later.
+      // This is important because BLE notifications must be stopped cleanly.
+      temperatureSubRef.current = sub;
+
+      // Update button/icon state to show that temperature notify is ON.
+      setNotifyTemperature(true);
+      return;
+    }
+
+    // ON → OFF
+    // If temperature notify is currently ON, we stop the BLE subscription.
+    console.log("[Environmental] ⏹️ Disabling LIVE temperature updates...");
+
+    if (temperatureSubRef.current) {
+      // remove() tells react-native-ble-plx to unsubscribe from this characteristic.
+      temperatureSubRef.current.remove();
+
+      // Clear the ref so we know there is no active temperature subscription.
+      temperatureSubRef.current = null;
+    }
+
+    // Update button/icon state to show that temperature notify is OFF.
+    setNotifyTemperature(false);
+  };
+
+  // -------------------------------------------
   // INITIAL READ OF METHANE + TEMPERATURE
   // -------------------------------------------
   useEffect(() => {
     console.log(
       "[Environmental] useEffect triggered. Device is:",
-      device ? "OK" : "NULL"
+      device ? "OK" : "NULL",
     );
 
     if (!device) {
@@ -149,21 +208,31 @@ const Environmental = ({ device }) => {
 
         {methane !== null ? (
           <>
-            <View style={styles.methaneRow}>
-              <Text style={styles.text}>
-                Methane Concentration:{" "}
-                <Text style={styles.value}>{methane} LEL</Text>
+            {/* Methane sensor card
+    Why:
+    - Makes methane look like an important dashboard value.
+    - Separates the sensor name from the actual reading.
+    - Keeps the notify icon in the top-right, like a control/status action.
+*/}
+            {/* Compact methane dashboard row
+    Why:
+    - Keeps everything on one line.
+    - Still gives the value a clean dashboard look.
+    - Does not waste vertical space like a large card.
+*/}
+            <View style={styles.sensorStrip}>
+              <Text style={styles.sensorStripText}>
+                Concentration: <Text style={styles.value}>{methane} LEL</Text>
               </Text>
 
               <TouchableOpacity
                 onPress={toggleMethaneNotify}
-                activeOpacity={0.2} // 👈 strong, visible feedback
+                activeOpacity={0.2}
               >
                 <MaterialIcons
                   name={notifyMethane ? "notifications" : "notifications-off"}
-                  size={32}
-                  color={notifyMethane ? "#04de71ff" : "#aea8a8ff"}
-                  style={{ marginBottom: 8 }}
+                  size={30}
+                  color={notifyMethane ? "#04de71ff" : "#8f9aaa"}
                 />
               </TouchableOpacity>
             </View>
@@ -173,12 +242,25 @@ const Environmental = ({ device }) => {
         )}
 
         {temperature !== null ? (
-          <>
-            <Text style={[styles.text, { marginTop: 18 }]}>
+          <View style={styles.sensorStrip}>
+            <Text style={styles.sensorStripText}>
               Temperature:{" "}
-              <Text style={styles.value}>{(temperature / 100).toFixed(2)}</Text>
+              <Text style={styles.value}>
+                {(temperature / 100).toFixed(2)} °C
+              </Text>
             </Text>
-          </>
+
+            <TouchableOpacity
+              onPress={toggleTemperatureNotify}
+              activeOpacity={0.2}
+            >
+              <MaterialIcons
+                name={notifyTemperature ? "notifications" : "notifications-off"}
+                size={30}
+                color={notifyTemperature ? "#04de71ff" : "#8f9aaa"}
+              />
+            </TouchableOpacity>
+          </View>
         ) : (
           <Text style={styles.text}>Reading temperature…</Text>
         )}
@@ -201,7 +283,7 @@ const Environmental = ({ device }) => {
                     interval === sec && styles.intervalActive,
                   ]}
                 >
-                  <Text style={{ color: "#fff", fontSize: 16 }}>{sec}s</Text>
+                  <Text style={styles.intervalButtonText}>{sec}s</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -238,7 +320,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   value: {
-    color: "#b2b2f4ff",
+    color: "rgb(139, 192, 252)",
     fontWeight: "bold",
   },
   error: {
@@ -250,20 +332,30 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 10,
   },
+  // Individual interval button.
+  // Why:
+  // - Makes the interval buttons look like dashboard controls.
+  // - Uses the same dark navy + soft blue border as the rest of the app.
+  // - Keeps the buttons small and compact.
   intervalButton: {
-    backgroundColor: "#444",
-    color: "#fff",
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    fontSize: 16,
-    marginBottom: 30,
+    backgroundColor: "rgba(13, 27, 47, 0.9)",
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.28)",
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    marginBottom: 4,
   },
+
+  // Selected interval button.
+  // Why:
+  // - Shows clearly which interval is currently active.
+  // - Uses the same FGD blue as the selected tab.
   intervalActive: {
-    backgroundColor: "#6a6af4",
-    fontWeight: "bold",
+    backgroundColor: "#2f80ed",
+    borderColor: "#2f80ed",
   },
-  methaneRow: {
+  sensorRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 15,
@@ -274,15 +366,59 @@ const styles = StyleSheet.create({
   },
 
   intervalContainer: {
-    paddingBottom: 10,
-    position: "absolute", // ✅ important
-    bottom: 0, // ✅ important
-    left: 0, // ✅ important
-    right: 0, // ✅ important
-    zIndex: 999, // ✅ important
-    elevation: 20, // ✅ Android: keep above
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 999,
+    elevation: 20,
+
     alignItems: "center",
-    backgroundColor: "#222", // same screen background
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+
+    backgroundColor: "#07111f",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(66, 153, 225, 0.25)",
+  },
+  // Compact sensor row.
+  // Why:
+  // - Keeps the row as a dashboard strip.
+  // - Centers the text + icon group together.
+  // - Prevents the text from sticking too much to the left.
+  sensorStrip: {
+    width: "100%",
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(13, 27, 47, 0.88)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.28)",
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+
+  // Text inside compact sensor row.
+  // Why:
+  // - No flex: 1 here, because flex: 1 pushes the icon to the far right.
+  // - This lets the text and icon stay together in the center.
+  sensorStripText: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 17,
+    fontWeight: "700",
+    marginRight: 12,
+    textAlign: "center",
+  },
+  // Text inside interval buttons.
+  // Why:
+  // - Keeps button text consistent and easier to adjust later.
+  intervalButtonText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "800",
   },
 });
 

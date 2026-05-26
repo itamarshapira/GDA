@@ -118,16 +118,46 @@ if (bytes.length >= 6) {
 
   // --- Add G-force conversion ---
   // Common IMU scale (we verify if correct)
-  const SCALE = 20000;
+  const SCALE = 2048;
 
   const gx = x / SCALE;
-  const gy = y / SCALE;
-  const gz = z / SCALE;
+const gy = y / SCALE;
+const gz = z / SCALE;
 
-  console.log("[AxisService] Raw:", { x, y, z });
-  console.log("[AxisService] G-force:", { gx, gy, gz });
+// Magnitude is the total acceleration vector length.
+// Why:
+// - When the detector is standing still, the magnitude should be close to 1g.
+// - This helps us verify if SCALE = 20000 is actually correct.
+// Example:
+// - gx=0, gy=0, gz=1 → magnitude = 1g
+// - gx=0.5, gy=0, gz=0.5 → magnitude ≈ 0.707g
+const magnitude = Math.sqrt(gx * gx + gy * gy + gz * gz);
 
-  return { x, y, z, gx, gy, gz };
+console.log("[AxisService] Raw:", { x, y, z });
+console.log("[AxisService] G-force:", { gx, gy, gz, magnitude });
+
+// Simple orientation hint based on the strongest gravity axis.
+// Why:
+// - Raw gx/gy/gz numbers are useful for debugging,
+//   but not very clear for an operator.
+// - This tells us which axis is currently closest to gravity.
+// Example:
+// - gy ≈ -1 means the detector's Y axis is mostly aligned with gravity.
+const absX = Math.abs(gx);
+const absY = Math.abs(gy);
+const absZ = Math.abs(gz);
+
+let orientationHint = "Unknown orientation";
+
+if (absX >= absY && absX >= absZ) {
+  orientationHint = gx >= 0 ? "+X axis down" : "-X axis down";
+} else if (absY >= absX && absY >= absZ) {
+  orientationHint = gy >= 0 ? "+Y axis down" : "-Y axis down";
+} else {
+  orientationHint = gz >= 0 ? "+Z axis down" : "-Z axis down";
+}
+
+return { x, y, z, gx, gy, gz, magnitude, orientationHint };
 }
   } catch (err) {
     console.log("[AxisService] ❌ Read failed:", err.message);
@@ -167,7 +197,7 @@ export const monitorAxis = (device, onValue) => {
         const y = bytes.readInt16LE(2);
         const z = bytes.readInt16LE(4);
 
-        const SCALE = 20000;
+        const SCALE = 2048;
 
         const gx = x / SCALE;
         const gy = y / SCALE;

@@ -220,14 +220,16 @@ export default AlertNotification;
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 18,
     paddingBottom: 30,
+    backgroundColor: "#07111f",
   },
   header: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 12,
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "800",
+    marginBottom: 16,
     textAlign: "center",
   },
   error: {
@@ -252,17 +254,21 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 12,
-    marginBottom: 12,
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 16,
   },
   button: {
-    backgroundColor: "#333",
-    paddingVertical: 8,
+    backgroundColor: "#0d1b2f",
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.35)",
+    paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 6,
+    borderRadius: 999,
   },
   buttonLive: {
-    backgroundColor: "#7a1f1f",
+    backgroundColor: "#2f80ed",
+    borderColor: "#2f80ed",
   },
   buttonText: {
     color: "#fff",

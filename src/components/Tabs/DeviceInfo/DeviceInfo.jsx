@@ -130,101 +130,131 @@ const DeviceInfo = ({ device }) => {
 };
 
 const styles = StyleSheet.create({
+  // Full scroll area.
+  // Why:
+  // - Matches the new FGD dark navy dashboard style.
+  // - Keeps the whole Device Info screen visually connected to the app.
   scrollArea: {
-    // full height scrollable
     flex: 1,
-    // backgroundColor: "rgb(40,40,40)",
+    backgroundColor: "#07111f",
   },
+
+  // Inner content.
+  // Why:
+  // - alignItems: "stretch" lets each info row use full width.
+  // - This creates clean dashboard strips instead of floating text rows.
   content: {
-    // inner content area
-    paddingVertical: 20,
-    paddingHorizontal: 12,
-    alignItems: "center", // align center horizontally
-    // justifyContent: "center", // align center vertically
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "stretch",
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 40,
   },
+
   header: {
-    color: "#fff",
-    fontSize: 22,
-    marginBottom: 20,
-    fontWeight: "bold",
+    color: "#ffffff",
+    fontSize: 24,
+    marginBottom: 16,
+    fontWeight: "800",
+    textAlign: "center",
   },
+
   text: {
-    color: "#ccc",
-    fontSize: 18,
+    color: "rgba(255,255,255,0.70)",
+    fontSize: 17,
     marginBottom: 8,
+    textAlign: "center",
+    fontWeight: "700",
   },
+
   error: {
-    color: "tomato",
+    color: "#ff6b6b",
     marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "700",
   },
-  info: {
-    color: "#b2b2f4ff",
-    fontWeight: "bold",
-  },
+
+  // One device information row.
+  // Why:
+  // - Compact dashboard strip style.
+  // - Same visual language as Environmental and Device Settings.
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    minHeight: 48,
+    marginBottom: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+
+    backgroundColor: "rgba(13, 27, 47, 0.88)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.26)",
   },
 
+  // Label column.
+  // Why:
+  // - Fixed width keeps all values aligned.
+  // - 118 is enough for "Manufacturer" without making the value too tight.
   colLabel: {
-    width: 130, // fixed label column like DeviceSettings
-    justifyContent: "center",
-  },
-
-  colValueWide: {
-    width: 180, // fixed value column to keep alignment stable
+    width: 118,
     justifyContent: "center",
   },
 
   label: {
-    color: "#ccc",
-    fontSize: 14,
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  // Value column.
+  // Why:
+  // - flex: 1 lets long values use remaining space.
+  // - Better than fixed width for IP, SSID, model, serial, etc.
+  colValueWide: {
+    flex: 1,
+    justifyContent: "center",
   },
 
   value: {
-    color: "#b2b2f4ff",
-    fontWeight: "bold",
-    fontSize: 14,
+    color: "#b2d9ff",
+    fontWeight: "900",
+    fontSize: 15,
   },
 
   subText: {
-    color: "#888",
+    color: "rgba(255,255,255,0.45)",
     fontSize: 12,
     marginTop: 2,
+    fontWeight: "600",
   },
 
-  label: {
-    width: 140, // 👈 fixed column for names
-    color: "#ccc",
-    fontSize: 18,
-  },
-
-  value: {
-    flex: 1, // 👈 takes remaining space
-    color: "#b2b2f4ff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  // Wi-Fi settings button.
+  // Why:
+  // - Uses the same blue dashboard action style.
+  // - This is an important action because it helps the user connect to the detector AP.
   wifiButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2c2c2c",
-    paddingVertical: 10,
+    justifyContent: "center",
+
+    backgroundColor: "#2f80ed",
+    paddingVertical: 11,
     paddingHorizontal: 16,
-    borderRadius: 10,
-    marginTop: 12,
-    marginBottom: 12,
+    borderRadius: 999,
+    marginTop: 4,
+    marginBottom: 14,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
   },
 
   wifiButtonText: {
-    color: "#fff",
+    color: "#ffffff",
     marginLeft: 10,
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "800",
   },
 });
 

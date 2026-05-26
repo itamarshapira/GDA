@@ -1,6 +1,6 @@
 // src/components/Navbar/Navbar.js
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -34,7 +34,14 @@ const Navbar = (props) => {
 
   // ✅ NEW STATE: show loading banner while scanning/connecting
   // This gives user feedback (10 sec wait sometimes)
-  const [isConnecting, setIsConnecting] = useState(false);
+  // Controls the small status banner under the Navbar.
+  // null = no banner
+  // "scanning" = app is searching for FG BLE devices
+  // "retrying" = first scan was empty, so app is checking once more
+  // "connecting" = user selected a device and app is connecting to it
+  // "disconnecting" = app is disconnecting from the current device
+  const [connectionPhase, setConnectionPhase] = useState(null);
+  const bleActionInProgressRef = useRef(false);
 
   // NEW STATE: To control the visibility of the error message
   const [scanError, setScanError] = useState(false);
@@ -93,78 +100,92 @@ const Navbar = (props) => {
   };
 
   const handleBluetoothPress = async () => {
+    // State updates are asynchronous, so use a ref to block a second press immediately.
+    // This prevents overlapping scans while Bluetooth state/permissions are checked.
+    if (bleActionInProgressRef.current) return;
+
+    bleActionInProgressRef.current = true;
+    setConnectionPhase("preparing");
     console.log("🟦 Bluetooth icon clicked! (Navbar)");
-    // ✅ 1) Check if Bluetooth is ON before doing anything
-    const btState = await manager.state();
-    console.log("[Navbar] Bluetooth state:", btState);
-
-    if (btState !== "PoweredOn") {
-      console.log("🚫 Bluetooth is OFF — ask user to turn it on");
-
-      // show UI message
-      showBluetoothOffToast(); // we will add this function next
-      return;
-    }
-    // ✅ NEW:
-    // If already connected → disconnect
-    // We can optionally show loading while disconnecting
-    if (connectedDevice) {
-      setIsConnecting(true); // ✅ NEW: show spinner while disconnecting too
-      const success = await disconnectDevice(connectedDevice);
-      setIsConnecting(false); // ✅ NEW: stop spinner after disconnect attempt
-
-      if (success) {
-        setConnectedDevice(null);
-        setIsBluetoothOn(false);
-        props.onBleDisconnected(); // tell App.js we're disconnected
-      }
-      return;
-    }
-
-    const granted = await requestBlePermissions();
-    if (!granted) {
-      console.log("❌ Permissions denied — cannot scan BLE");
-      return;
-    }
-
-    console.log("✅ Permissions granted — starting BLE scan...");
-
-    // ✅ NEW:
-    // From THIS moment until connection success/fail, we show "Connecting..." pill.
-    // This matches exactly what you described:
-    // Between: 🟦 Bluetooth icon clicked!
-    // And:     ✅ Connected to: FG-OPGD
-    setIsConnecting(true);
-    setScanError(false); // ✅ optional: hide previous error toast if exists
 
     try {
-      const devices = await scanForFGDevices();
+      // 1) Check if Bluetooth is ON before scanning/connecting.
+      const btState = await manager.state();
+      console.log("[Navbar] Bluetooth state:", btState);
+
+      if (btState !== "PoweredOn") {
+        console.log("🚫 Bluetooth is OFF — ask user to turn it on");
+        showBluetoothOffToast();
+        return;
+      }
+
+      // 2) If already connected, pressing the BLE icon means disconnect.
+      if (connectedDevice) {
+        setConnectionPhase("disconnecting");
+
+        const success = await disconnectDevice(connectedDevice);
+
+        if (success) {
+          setConnectedDevice(null);
+          setIsBluetoothOn(false);
+          props.onBleDisconnected(); // Tell App.js we are disconnected
+        }
+
+        return;
+      }
+
+      // 3) Ask Android permissions before BLE scan.
+      const granted = await requestBlePermissions();
+
+      if (!granted) {
+        console.log("❌ Permissions denied — cannot scan BLE");
+        return;
+      }
+
+      console.log("✅ Permissions granted — starting BLE scan...");
+
+      // 4) Search for nearby FG devices.
+      setConnectionPhase("scanning");
+      setScanError(false);
+
+      let devices = await scanForFGDevices();
+
+      // Some Android BLE scans can be empty while a nearby device is already
+      // advertising. Retry once before presenting a failure to the user.
+      if (devices.length === 0) {
+        setConnectionPhase("retrying");
+        console.log("[Navbar] First scan empty — retrying once...");
+        devices = await scanForFGDevices(5000);
+      }
 
       console.log(
         "📋 FG devices found:",
-        devices.map((d) => d.name)
+        devices.map((d) => d.name),
       );
+
       setFoundDevices(devices);
       console.log("STATE DEVICES:", devices.length);
-      setShowPicker(true);
-      setIsConnecting(false);
 
       if (!devices || devices.length === 0) {
         console.log(
-          "🚫 No FG devices found — showing toast, not opening picker"
+          "🚫 No FG devices found — showing toast, not opening picker",
         );
-        setIsConnecting(false);
+
         setShowPicker(false);
         showErrorToast();
         return;
       }
-      // TEMP: just log for now — no connect yet
+
+      // Open picker only if devices were found.
+      setShowPicker(true);
     } catch (error) {
       console.log("❌ Scan failed:", error.message);
 
-      setIsConnecting(false);
-      setShowPicker(false); // ✅ make sure picker never opens
-      showErrorToast(); // ✅ reuse your existing red toast
+      setShowPicker(false);
+      showErrorToast();
+    } finally {
+      bleActionInProgressRef.current = false;
+      setConnectionPhase(null);
     }
   };
 
@@ -176,10 +197,21 @@ const Navbar = (props) => {
       />
 
       {/* ✅ NEW: Loading Banner UI */}
-      {isConnecting && (
+      {connectionPhase && (
         <View style={loadingStyles.loadingPill}>
-          <ActivityIndicator size="small" color="#ffffff" />
-          <Text style={loadingStyles.loadingText}>Connecting…</Text>
+          <ActivityIndicator size="small" color="#8ecbff" />
+
+          <Text style={loadingStyles.loadingText}>
+            {connectionPhase === "scanning"
+              ? "Searching for FG devices…"
+              : connectionPhase === "retrying"
+                ? "Still searching for FG devices…"
+                : connectionPhase === "connecting"
+                  ? "Connecting to detector…"
+                  : connectionPhase === "disconnecting"
+                    ? "Disconnecting…"
+                    : "Preparing Bluetooth…"}
+          </Text>
         </View>
       )}
 
@@ -201,8 +233,8 @@ const Navbar = (props) => {
       */}
       <TouchableOpacity
         onPress={handleBluetoothPress}
-        disabled={isConnecting}
-        style={{ opacity: isConnecting ? 0.5 : 1 }}
+        disabled={!!connectionPhase}
+        style={{ opacity: connectionPhase ? 0.5 : 1 }}
         activeOpacity={0.1}
       >
         <MaterialCommunityIcons
@@ -252,21 +284,35 @@ const Navbar = (props) => {
                   style={{ padding: 12, borderBottomWidth: 1 }}
                   onPress={async () => {
                     try {
+                      // Close the device picker after user selects a detector.
                       setShowPicker(false);
-                      setIsConnecting(true);
+
+                      // Second phase: we already found devices, now we connect to the selected one.
+                      setConnectionPhase("connecting");
 
                       console.log("🔗 Connecting to selected:", item.name);
 
                       const connected = await connectToSelectedDevice(item);
 
+                      // Save the connected BLE device locally in Navbar.
                       setConnectedDevice(connected);
+
+                      // Change the BLE icon to connected state.
                       setIsBluetoothOn(true);
+
+                      // Tell App.js that BLE is connected, so App.js can move to Login1.
                       props.onBleConnected(connected);
 
-                      setIsConnecting(false);
+                      // Hide the banner after successful connection.
+                      setConnectionPhase(null);
                     } catch (e) {
                       console.log("❌ Selected connect failed:", e.message);
-                      setIsConnecting(false);
+
+                      // Hide the banner if connection failed.
+                      setConnectionPhase(null);
+
+                      // Optional: reuse the existing error toast.
+                      showErrorToast();
                     }
                   }}
                 >
@@ -286,22 +332,33 @@ export default Navbar;
 // ✅ NEW: Loading pill styles
 const loadingStyles = StyleSheet.create({
   loadingPill: {
-    position: "absolute", // appears above navbar area
-    top: 65, // below navbar
+    position: "absolute",
+    top: 65,
     left: 20,
     right: 20,
-    backgroundColor: "#444",
-    paddingVertical: 10,
-    borderRadius: 10,
+
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+
+    borderRadius: 16,
+    backgroundColor: "rgba(8, 24, 44, 0.94)",
+    borderWidth: 1,
+    borderColor: "rgba(108, 180, 255, 0.28)",
+
     zIndex: 9,
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
     justifyContent: "center",
+
+    elevation: 8,
   },
+
   loadingText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "#d9ecff",
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0.2,
   },
 });
 

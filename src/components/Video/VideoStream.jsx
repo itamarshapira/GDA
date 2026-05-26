@@ -19,6 +19,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import DigestFetch from "react-native-digest-fetch";
+import { LinearGradient } from "expo-linear-gradient";
 
 // First URL: used only to "warm up" authentication.
 // Warning: username/password in URL can appear in logs, so this is for testing/workaround.
@@ -76,53 +77,79 @@ const VideoStream = ({ refreshKey }) => {
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.headerRow}>
-        {/* <Text style={styles.title}>Live Video</Text> */}
+      {/* Camera card
+        Why:
+        - Groups the LIVE badge, refresh button, and video into one clean panel.
+        - This makes the video look like part of a dashboard instead of a raw WebView.
+    */}
+      <LinearGradient
+        colors={[
+          "rgba(47, 128, 237, 0.22)", // top/left: soft FGD blue glow
+          "rgba(13, 27, 47, 1)", // middle: main dark navy card
+          "rgba(7, 17, 31, 1)", // bottom/right: darker edge
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cameraCard}
+      >
+        {/* Top row above the video */}
+        <View style={styles.cameraHeader}>
+          {/* LIVE badge
+            Why:
+            - Gives the user immediate confidence that this is the live camera area.
+            - Green dot is only visual for now; it does not check stream health yet.
+        */}
+          <View style={styles.liveBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
 
-        {/* <TouchableOpacity onPress={refreshVideo} activeOpacity={0.2}>
-          <MaterialCommunityIcons name="refresh" size={25} color="#c2c2c2ff" />
-        </TouchableOpacity> */}
-      </View>
+          {/* Refresh button
+            Why:
+            - Keeps the existing refreshVideo logic.
+            - Moves the button into the card header instead of floating over the video.
+        */}
+          <TouchableOpacity
+            style={styles.refreshBtn}
+            onPress={refreshVideo}
+            activeOpacity={0.5}
+          >
+            <MaterialCommunityIcons name="refresh" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
 
-      {/* VIDEO */}
-      <View style={styles.videoWrapper}>
-        <WebView
-          key={videoKey}
-          source={{ uri: currentUrl }}
-          style={styles.webview}
-          originWhitelist={["*"]}
-          mixedContentMode="always"
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          onLoadEnd={() => {
-            // This event fires when the page finishes loading (successfully or with an error).
-            console.log("[WebView] Loaded:", currentUrl);
+        {/* Video window */}
+        <View style={styles.videoFrame}>
+          <WebView
+            key={videoKey}
+            source={{ uri: currentUrl }}
+            style={styles.webview}
+            originWhitelist={["*"]}
+            mixedContentMode="always"
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            onLoadEnd={() => {
+              console.log("[WebView] Loaded:", currentUrl);
 
-            // After the auth warm-up page loads, switch to the clean normal URL.
-            if (currentUrl === AUTH_WARMUP_URL) {
+              if (currentUrl === AUTH_WARMUP_URL) {
+                console.log(
+                  "[WebView] Auth warm-up finished, switching to normal URL",
+                );
+                setCurrentUrl(VIDEO_URL);
+              }
+            }}
+            onHttpError={(event) => {
               console.log(
-                "[WebView] Auth warm-up finished, switching to normal URL",
+                "[WebView] HTTP error:",
+                event.nativeEvent.statusCode,
               );
-              setCurrentUrl(VIDEO_URL);
-            }
-          }}
-          onHttpError={(event) => {
-            console.log("[WebView] HTTP error:", event.nativeEvent.statusCode);
-          }}
-          onError={(event) => {
-            console.log("[WebView] Error:", event.nativeEvent);
-          }}
-        />
-
-        <TouchableOpacity
-          style={styles.refreshBtn}
-          onPress={refreshVideo}
-          activeOpacity={0.5}
-        >
-          <MaterialCommunityIcons name="refresh" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+            }}
+            onError={(event) => {
+              console.log("[WebView] Error:", event.nativeEvent);
+            }}
+          />
+        </View>
+      </LinearGradient>
     </View>
   );
 };
@@ -130,52 +157,93 @@ const VideoStream = ({ refreshKey }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
     width: "100%",
-
-    // rounded corners only bottom
-    // borderBottomLeftRadius: 10,
-    // borderBottomRightRadius: 10,
-    // overflow: "hidden",
+    backgroundColor: "#07111f",
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
-  headerRow: {
-    //flexDirection: "row",
+
+  // Outer video panel.
+  // Why:
+  // - Creates the professional card shape from the screenshot.
+  // - overflow hidden keeps inner content inside rounded corners.
+  cameraCard: {
+    flex: 1,
+    backgroundColor: "#0d1b2f",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(66, 153, 225, 0.28)",
+    padding: 10,
+    overflow: "hidden",
+  },
+
+  // Header row inside the camera card.
+  // Why:
+  // - Places LIVE on the left and refresh on the right.
+  cameraHeader: {
+    height: 42,
+    flexDirection: "row",
     alignItems: "center",
-    //justifyContent: "space-between",
-    // width: "100%", // 👈 THIS is the right place
-    //paddingHorizontal: 140, // keeps it visually balanced --? related to full width of title Dimensions.get("window").width
-    // paddingBlockEnd: 4,
-    // paddingHorizontal: 40,
+    justifyContent: "space-between",
   },
 
-  title: {
-    height: 30,
-    // width: Dimensions.get("window").width, // full width -> it work well but effect all so i comment out and in header row do 100% with but it doesnt take it all so in addition i did paddingHorizontal to keep it centerand in full width
+  // Small LIVE label.
+  // Why:
+  // - Gives the camera a real monitoring/dashboard feeling.
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
 
-    color: "#b2b2f47c",
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 30, // centers text vertically
-    fontWeight: "600",
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#00d46a",
+    marginRight: 8,
+  },
 
-    backgroundColor: "#000000ff", // subtle header look
+  liveText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  // Rounded video area.
+  // Why:
+  // - The WebView itself does not always clip nicely,
+  //   so we wrap it and apply overflow hidden here.
+  videoFrame: {
+    flex: 1,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#000000",
   },
 
   webview: {
     flex: 1,
-  },
-  videoWrapper: {
-    flex: 1,
+    backgroundColor: "#000000",
   },
 
+  // Refresh button in the card header.
+  // Why:
+  // - Cleaner than floating above the video.
   refreshBtn: {
-    position: "absolute",
-    top: 55,
-    right: 10,
-
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderRadius: 20,
-    padding: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
   },
 });
 

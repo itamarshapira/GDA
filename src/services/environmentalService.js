@@ -129,6 +129,37 @@ export function monitorMethaneNotifications(device, onValue) {
   );
 }
 
+/**
+ ** Subscribes to temperature notifications (live updates).
+ * 
+ * Callback:
+ * - onValue(rawTemperature) receives the raw BLE value.
+ * - In the UI we divide by 100 before showing Celsius.
+ *
+ * Returns:
+ * - subscription object.
+ * - Caller must call subscription.remove() to stop notifications.
+ */
+export function monitorTemperatureNotifications(device, onValue) {
+  if (!device) {
+    console.log("[TempServiceNotify] No device");
+    return null;
+  }
+
+  console.log("[TempServiceNotify] Enabling temperature NOTIFY...");
+
+  // Temperature is currently read with readUint16LECharacteristic(),
+  // so we use the matching monitorUint16LECharacteristic() helper here.
+  return monitorUint16LECharacteristic(
+    device,
+    ENVIRONMENTAL_SENSING_UUID,
+    TEMPERATURE_UUID,
+    onValue
+  );
+}
+
+
+
 
 /**
  ** Writes new measurement interval (seconds)

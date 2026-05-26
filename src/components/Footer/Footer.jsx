@@ -10,35 +10,33 @@ const Footer = () => {
 };
 
 const styles = StyleSheet.create({
+  // Bottom footer strip.
+  // Why:
+  // - Matches the new FGD dark navy dashboard style.
+  // - Removes the heavy half-circle shape, which felt separate from the app.
+  // - Keeps it clean and professional like a system footer.
   footer: {
-    height: 56,
+    minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
 
-    //backgroundColor: "#1c1c1e", // slightly lighter than app background
-    backgroundColor: "#082849e3",
+    backgroundColor: "#07111f",
 
-    borderTopLeftRadius: 90,
-    borderTopRightRadius: 90,
-    // borderBottomLeftRadius: 1,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(134, 187, 230, 0.22)",
 
-    borderTopWidth: 12,
-    borderTopColor: "#0c2b5a79",
-
-    marginHorizontal: 90,
-
-    // subtle elevation
-    elevation: 6,
-    shadowColor: "#000000ff",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 6,
+    paddingVertical: 8,
   },
 
+  // Footer text.
+  // Why:
+  // - Soft white/blue fits the dashboard style.
+  // - Small text keeps footer secondary, not distracting.
   text: {
-    color: "#9aa0a6",
+    color: "rgba(255,255,255,0.55)",
     fontSize: 12,
-    letterSpacing: 0.3,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
 });
 

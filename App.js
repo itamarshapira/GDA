@@ -28,7 +28,7 @@ export default function App() {
       <StatusBar
         translucent={false} // keep false so background color shows on Android
         backgroundColor="#4b46ac" // visible blue background
-        barStyle="dark-content" // light icons/text on top of blue
+        barStyle="light-content" // light icons/text on top of blue
       />
       <Navbar
         onBleConnected={(device) => {
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     //backgroundColor: "#2d2d2dff",
-    backgroundColor: "#ebf9faff",
+    backgroundColor: "#082849e3", // #082849e3 option
     elevation: 4,                // shadow for Android
     shadowColor: "#000",         // shadow for iOS
     shadowOpacity: 0.1,
