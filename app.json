@@ -4,21 +4,22 @@
     "slug": "GDA",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/fgd_android_icon_1024.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/fgd_splash_logo_1024.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#061E38"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/fgd_adaptive_foreground_1024.png",
+        "backgroundImage": "./assets/fgd_adaptive_background_1024.png",
+        "monochromeImage": "./assets/fgd_adaptive_monochrome_1024.png"
       },
       "edgeToEdgeEnabled": true,
       "usesCleartextTraffic": true,

@@ -341,6 +341,8 @@ const DeviceSettings = ({ device }) => {
                 keyboardType="number-pad"
                 //inputMode="numeric"
                 placeholder="edit value"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                selectionColor="#8ecbff"
                 style={styles.input}
               />
             </View>
@@ -374,6 +376,8 @@ const DeviceSettings = ({ device }) => {
                 onChangeText={setAlarmLevelInput}
                 keyboardType="number-pad"
                 placeholder="edit value"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                selectionColor="#8ecbff"
                 style={styles.input}
               />
             </View>
@@ -406,6 +410,8 @@ const DeviceSettings = ({ device }) => {
                 onChangeText={setWarnLevelInput}
                 keyboardType="numeric"
                 placeholder="edit value"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                selectionColor="#8ecbff"
                 style={styles.input}
               />
             </View>
@@ -438,6 +444,8 @@ const DeviceSettings = ({ device }) => {
                 onChangeText={setLowestLevelInput}
                 keyboardType="numeric"
                 placeholder="edit value"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                selectionColor="#8ecbff"
                 style={styles.input}
               />
             </View>
@@ -470,6 +478,8 @@ const DeviceSettings = ({ device }) => {
                 onChangeText={setResponseTimeInput}
                 keyboardType="numeric"
                 placeholder="edit value"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                selectionColor="#8ecbff"
                 style={styles.input}
               />
             </View>
@@ -502,6 +512,8 @@ const DeviceSettings = ({ device }) => {
                 onChangeText={setBlockDelayInput}
                 keyboardType="numeric"
                 placeholder="edit value"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                selectionColor="#8ecbff"
                 style={styles.input}
               />
             </View>

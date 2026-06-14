@@ -17,7 +17,7 @@ import VideoStream from "../Video/VideoStream";
 import AlertBanner from "../AlertBanner/AlertBanner";
 import { LinearGradient } from "expo-linear-gradient";
 const Tabs = ({ device }) => {
-  const [selectedTab, setSelectedTab] = useState("alert");
+  const [selectedTab, setSelectedTab] = useState("mediaControl"); // Default tab when the dashboard opens.
 
   // This key is used to tell VideoStream to refresh/remount.
   // When resolution changes, we increment this value.
@@ -80,9 +80,9 @@ const Tabs = ({ device }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabMenu}
         >
+          {TabButton("mediaControl", "Device Control")}
           {TabButton("alert", "Alert Notification")}
           {TabButton("environmental", "Env Sensing")}
-          {TabButton("mediaControl", "Device Control")}
           {TabButton("settings", "Settings")}
           {TabButton("deviceInfo", "Device Info")}
           {TabButton("generic", "Generic Access")}

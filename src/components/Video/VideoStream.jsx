@@ -23,10 +23,10 @@ import { LinearGradient } from "expo-linear-gradient";
 
 // First URL: used only to "warm up" authentication.
 // Warning: username/password in URL can appear in logs, so this is for testing/workaround.
-const AUTH_WARMUP_URL = "http://fgcam:admin@10.42.0.1/live_mjpeg.html";
+const AUTH_WARMUP_URL = "http://fgcam:admin@10.42.0.1/live.html";
 
 // Second URL: the real page we want to show after auth is accepted.
-const VIDEO_URL = "http://10.42.0.1/live_mjpeg.html";
+const VIDEO_URL = "http://10.42.0.1/live.html";
 
 const VideoStream = ({ refreshKey }) => {
   const [currentUrl, setCurrentUrl] = useState(AUTH_WARMUP_URL); // WebView first loads the auth warm-up URL.

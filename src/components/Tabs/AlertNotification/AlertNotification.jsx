@@ -92,7 +92,24 @@ const AlertNotification = ({ device, alertStatus, setAlertStatus }) => {
   // INITIAL READ + CLEANUP
   // -------------------------------------------
   useEffect(() => {
+    // When the dashboard opens, first read the current alert status once.
     fetchAlertStatus();
+
+    // Then start live alert notifications automatically.
+    // The alert status should keep updating even if the user is on another tab.
+    if (device && !notifySubRef.current) {
+      console.log("[AlertNotification] ▶️ Auto-starting LIVE alert notify");
+
+      const sub = startAlertStatusNotify(device, (value) => {
+        console.log("[AlertNotification] 🔔 AUTO LIVE alert:", value);
+        setAlertStatus(value);
+      });
+
+      if (sub) {
+        notifySubRef.current = sub;
+        setNotifyOn(true);
+      }
+    }
 
     return () => {
       console.log("[AlertNotification] cleanup");
@@ -101,6 +118,9 @@ const AlertNotification = ({ device, alertStatus, setAlertStatus }) => {
         notifySubRef.current.remove();
         notifySubRef.current = null;
       }
+      // Reset the UI button state.
+      // The actual BLE notification was stopped above with remove().
+      setNotifyOn(false);
     };
   }, [device]);
 

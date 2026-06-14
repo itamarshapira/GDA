@@ -222,7 +222,10 @@ const Environmental = ({ device }) => {
 */}
             <View style={styles.sensorStrip}>
               <Text style={styles.sensorStripText}>
-                Concentration: <Text style={styles.value}>{methane} LEL</Text>
+                Concentration:{" "}
+                <Text style={styles.value}>
+                  {(methane / 100).toFixed(2)} %LEL M
+                </Text>
               </Text>
 
               <TouchableOpacity
@@ -245,9 +248,7 @@ const Environmental = ({ device }) => {
           <View style={styles.sensorStrip}>
             <Text style={styles.sensorStripText}>
               Temperature:{" "}
-              <Text style={styles.value}>
-                {(temperature / 100).toFixed(2)} °C
-              </Text>
+              <Text style={styles.value}>{temperature.toFixed(2)} °C</Text>
             </Text>
 
             <TouchableOpacity
