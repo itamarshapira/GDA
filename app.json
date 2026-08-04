@@ -2,16 +2,16 @@
   "expo": {
     "name": "GasApp",
     "slug": "GDA",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/fgd_android_icon_1024.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/fgd_splash_logo_1024.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#061E38"
-    },
+  "image": "./assets/fgd_splash_logo_transparent.png",
+  "resizeMode": "contain",
+  "backgroundColor": "#041A34"
+},
     "ios": {
       "supportsTablet": true
     },

@@ -14,15 +14,30 @@ import { I18nManager } from 'react-native'; // import I18nManager to manage layo
  import Welcome from "./src/components/Welcome/Welcome";
  import Login1 from "./src/components/Login1/Login1";
  import Tabs from "./src/components/Tabs/Tabs";
-  import Footer from "./src/components/Footer/Footer";
-
+ import Footer from "./src/components/Footer/Footer";
+ import AnimatedSplash from "./src/components/AnimatedSplash/AnimatedSplash";
 
 export default function App() {
   const [isConnected, setIsConnected] = useState(false); // welcome -> login. sent to Navbar
   const [isLoggedIn, setIsLoggedIn] = useState(false); // login -> tabs.
   const [connectedDevice, setConnectedDevice] = useState(null);
+  const [showAnimatedSplash, setShowAnimatedSplash] = useState(true); // Show animated splash on app start
 
 
+  // Show the custom animated intro first.
+// After AnimatedSplash finishes, it calls onFinish and the normal app appears.
+if (showAnimatedSplash) {
+  return (
+    <>
+      <StatusBar
+        translucent={false}
+        backgroundColor="#061E38"
+        barStyle="light-content"
+      />
+      <AnimatedSplash onFinish={() => setShowAnimatedSplash(false)} />
+    </>
+  );
+}
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
