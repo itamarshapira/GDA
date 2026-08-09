@@ -16,12 +16,15 @@ import { I18nManager } from 'react-native'; // import I18nManager to manage layo
  import Tabs from "./src/components/Tabs/Tabs";
  import Footer from "./src/components/Footer/Footer";
  import AnimatedSplash from "./src/components/AnimatedSplash/AnimatedSplash";
+ import SourceTabs from "./src/components/SourceTabs/SourceTabs";
 
 export default function App() {
   const [isConnected, setIsConnected] = useState(false); // welcome -> login. sent to Navbar
   const [isLoggedIn, setIsLoggedIn] = useState(false); // login -> tabs.
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [showAnimatedSplash, setShowAnimatedSplash] = useState(true); // Show animated splash on app start
+  
+  const [deviceType, setDeviceType] = useState(null); // Stores whether the selected BLE device is a detector or source.
 
 
   // Show the custom animated intro first.
@@ -46,29 +49,38 @@ if (showAnimatedSplash) {
         barStyle="light-content" // light icons/text on top of blue
       />
       <Navbar
-        onBleConnected={(device) => {
-          setConnectedDevice(device); // Save device after BLE connection
-          setIsConnected(true);       // BLE connected
+        onBleConnected={(device, type) => {
+        setConnectedDevice(device); // Store the connected BLE device
+        setDeviceType(type); // Store the detected device type (detector or source)
+        setIsConnected(true); // BLE connected, show login or tabs based on login state
+
+        // Temporary verification before we add SourceTabs.
+        console.log(" App js: Connected device type received by App.js:", type);
         }}
         onBleDisconnected={() => {
           setConnectedDevice(null);  // Clear device
           setIsConnected(false);     // BLE disconnected
           setIsLoggedIn(false);      // Reset login state
+          setDeviceType(null); // Clear device type on disconnect
         }}
       />
       
       {/* Render flow: Welcome → Login1 → Tabs */}
       {isConnected ? (
-        isLoggedIn ? (
-          <Tabs device={connectedDevice} /> // Pass device to Tabs 
-        ) : (
-          <Login1
-            device={connectedDevice}          // Pass the BLE device to Login1
-            onLogin={() => setIsLoggedIn(true)} // Login1 calls this after passkey
-          /> 
-          
-        )
-      ) : (
+          isLoggedIn ? ( // If connected and logged in, show Tabs or SourceTabs based on device type
+              deviceType === "source" ? (
+                <SourceTabs device={connectedDevice} /> // Render SourceTabs if the connected device is a source
+              ) : ( // Render Tabs if the connected device is a detector
+                <Tabs device={connectedDevice} /> // Pass the BLE device to Tabs
+              )  
+          ) : ( // If connected but not logged in, show Login1
+            <Login1
+              device={connectedDevice}          // Pass the BLE device to Login1
+              onLogin={() => setIsLoggedIn(true)} // Login1 calls this after passkey
+            /> 
+            
+          )
+      ) : ( // If not connected, show Welcome
         <View style={{ flex: 1 }}>
   {/* Centered Welcome */}
   <View style={{ flex: 1, justifyContent: "center" }}>

@@ -67,10 +67,28 @@ await device.discoverAllServicesAndCharacteristics();
 
 // Get all characteristics under Device Information service
 const allChars = await device.characteristicsForService(DEVICE_INFORMATION_UUID);
+console.log(
+  "deviceInfoService.js: Device Information characteristics:",
+  allChars.map((characteristic, index) => ({
+    index,
+    id: characteristic.id,
+    uuid: characteristic.uuid,
+    isReadable: characteristic.isReadable,
+    isWritableWithResponse: characteristic.isWritableWithResponse,
+  }))
+);
 
 // Find the two known instances
 const char18 = allChars.find((c) => c.id === 18); // SSID
 const char20 = allChars.find((c) => c.id === 20); // IP
+
+console.log(
+  "deviceInfoService.js: Hardcoded Wi-Fi characteristic lookup:",
+  {
+    char18Found: Boolean(char18),
+    char20Found: Boolean(char20),
+  }
+);
 
 let ssid = null;
 let deviceIP = null;

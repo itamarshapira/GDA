@@ -25,6 +25,31 @@ import {
 import { requestBlePermissions } from "../../services/androidService";
 import { writePasskey } from "../../services/loginService";
 
+//* new label for device type detection
+const getDeviceTypeFromName = (deviceName = "") => {
+  // Find the final letter immediately before the numeric serial.
+  // Examples:
+  // FGASD794 → D → detector
+  // FGASS794 → S → source
+  const match = deviceName.trim().match(/([A-Za-z])(?=\d)/); // ([A-Za-z]) = capture one letter, \d+ = followed by one or more numbers,  $ = the numbers must be at the end of the name
+
+  if (!match) {
+    return null;
+  }
+
+  const typeLetter = match[1].toUpperCase();
+
+  if (typeLetter === "D") {
+    return "detector";
+  }
+
+  if (typeLetter === "S") {
+    return "source";
+  }
+
+  return null;
+};
+
 const Navbar = (props) => {
   // props.onBleConnected, props.onBleDisconnected from App.js to inform connection state of BLE
   const [isBluetoothOn, setIsBluetoothOn] = useState(false); // Bluetooth icon state
@@ -279,46 +304,110 @@ const Navbar = (props) => {
             <FlatList
               data={foundDevices}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={{ padding: 12, borderBottomWidth: 1 }}
-                  onPress={async () => {
-                    try {
-                      // Close the device picker after user selects a detector.
-                      setShowPicker(false);
+              renderItem={({ item }) => {
+                // Use a fallback name in case the BLE device does not advertise a name.
+                const deviceName = item.name || "Unnamed device";
 
-                      // Second phase: we already found devices, now we connect to the selected one.
-                      setConnectionPhase("connecting");
+                /*
+                 * Read the final letter immediately before the numeric serial.
+                 *
+                 * Examples:
+                 * FGASD794 -> D -> Detector
+                 * FGASS794 -> S -> Source
+                 *
+                 * The "$" means the numbers must be at the end of the device name.
+                 */
+                const nameMatch = deviceName.trim().match(/([A-Za-z])\d+$/);
 
-                      console.log("🔗 Connecting to selected:", item.name);
+                const typeLetter = nameMatch
+                  ? nameMatch[1].toUpperCase()
+                  : null;
 
-                      const connected = await connectToSelectedDevice(item);
+                //* Convert the detected letter into a readable UI label:
 
-                      // Save the connected BLE device locally in Navbar.
-                      setConnectedDevice(connected);
+                // Internal value used by the app's navigation logic.
+                let deviceType = null;
 
-                      // Change the BLE icon to connected state.
-                      setIsBluetoothOn(true);
+                // Readable value displayed to the user in the BLE list.
+                let deviceTypeLabel = "Unknown device type";
 
-                      // Tell App.js that BLE is connected, so App.js can move to Login1.
-                      props.onBleConnected(connected);
+                if (typeLetter === "D") {
+                  deviceType = "detector";
+                  deviceTypeLabel = "Detector";
+                } else if (typeLetter === "S") {
+                  deviceType = "source";
+                  deviceTypeLabel = "Source";
+                }
 
-                      // Hide the banner after successful connection.
-                      setConnectionPhase(null);
-                    } catch (e) {
-                      console.log("❌ Selected connect failed:", e.message);
+                return (
+                  <TouchableOpacity
+                    style={{
+                      padding: 12,
+                      borderBottomWidth: 1,
+                    }}
+                    onPress={async () => {
+                      try {
+                        // Close the BLE device picker after the user selects a device.
+                        setShowPicker(false);
 
-                      // Hide the banner if connection failed.
-                      setConnectionPhase(null);
+                        // We finished scanning and are now connecting to the selected device.
+                        setConnectionPhase("connecting");
 
-                      // Optional: reuse the existing error toast.
-                      showErrorToast();
-                    }
-                  }}
-                >
-                  <Text>{item.name}</Text>
-                </TouchableOpacity>
-              )}
+                        console.log("🔗 Connecting to selected:", deviceName);
+
+                        const connected = await connectToSelectedDevice(item);
+
+                        // Save the connected BLE device locally inside Navbar.
+                        setConnectedDevice(connected);
+
+                        // Change the BLE icon to its connected state.
+                        setIsBluetoothOn(true);
+
+                        /*
+                         * Tell App.js that BLE connected successfully.
+                         *
+                         * At this stage we are still sending only the BLE device.
+                         * We are not routing to SourceTabs yet.
+                         */
+                        // Send both the connected BLE device and its detected type to App.js.
+                        props.onBleConnected(connected, deviceType);
+
+                        // Hide the connection banner after successful connection.
+                        setConnectionPhase(null);
+                      } catch (e) {
+                        console.log("❌ Selected connect failed:", e.message);
+
+                        // Hide the connection banner if connection failed.
+                        setConnectionPhase(null);
+
+                        // Show the existing connection error notification.
+                        showErrorToast();
+                      }
+                    }}
+                  >
+                    {/* BLE advertised device name */}
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {deviceName}
+                    </Text>
+
+                    {/* Device type detected automatically from the device name */}
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        marginTop: 3,
+                        color: "#666",
+                      }}
+                    >
+                      {deviceTypeLabel}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
             />
           </View>
         </View>

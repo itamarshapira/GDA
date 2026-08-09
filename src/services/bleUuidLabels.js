@@ -45,3 +45,37 @@ export const LOWEST_LEVEL_UUID = "889bf2a8-f93f-4481-a67e-3b2f4a078904";
 export const RESPONSE_TIME_UUID = "889bf2a8-f93f-4481-a67e-3b2f4a078905";
 export const BLOCK_DELAY_UUID = "889bf2a8-f93f-4481-a67e-3b2f4a078906";
 export const SELECT_GAS_TYPE_UUID = "889bf2a8-f93f-4481-a67e-3b2f4a078907";
+
+
+
+// ✅ Source Custom Settings Service
+// Same service UUID as Detector settings, but different meanings.
+export const SOURCE_SETTINGS_UUID =
+  "1b7e8251-2877-41c3-b46e-cf057c562024"; // prime uuid for Source settings service
+
+// Pulse Period
+export const SOURCE_PULSE_PERIOD_UUID =
+  "889bf2a8-f93f-4481-a67e-3b2f4a078901"; // Same UUID as Detector Full Scale, is used for Source Pulse Period instead. The two characteristics will be distinguished using their 0x2901 Characteristic User Description descriptors.
+
+// Pulse Width
+export const SOURCE_PULSE_WIDTH_UUID =
+  "889bf2a8-f93f-4481-a67e-3b2f4a078902"; // Same UUID as Detector Alarm Level, is used for Source Pulse Width instead. The two characteristics will be distinguished using their 0x2901 Characteristic User Description descriptors.
+
+/*
+ * Two Source characteristics use this same UUID:
+ * - Charger Frequency
+ * - Charger Duty Cycle
+ *
+ * They will later be distinguished using their 0x2901
+ * Characteristic User Description descriptors.
+ */
+export const SOURCE_CHARGER_SHARED_UUID =
+  "889bf2a8-f93f-4481-a67e-3b2f4a078903"; // same UUID as Detector Warn Level, is used for Source Charger Frequency and Charger Duty Cycle instead. The two characteristics will be distinguished using their 0x2901 Characteristic User Description descriptors.
+
+// High Voltage Setting
+export const SOURCE_HIGH_VOLTAGE_UUID =
+  "889bf2a8-f93f-4481-a67e-3b2f4a078904"; // same UUID as Detector Lowest Level, is used for Source High Voltage Setting instead. The two characteristics will be distinguished using their 0x2901 Characteristic User Description descriptors.
+
+// standard descriptor UUID for Characteristic User Description
+export const CHARACTERISTIC_USER_DESCRIPTION_UUID =
+  "00002901-0000-1000-8000-00805f9b34fb"; 
