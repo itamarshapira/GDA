@@ -20,7 +20,7 @@ import SourceSettings from "./SourceSettings/SourceSettings";
 
 const SourceTabs = ({ device }) => {
   // Device Information is currently the first and only Source tab.
-  const [selectedTab, setSelectedTab] = useState("mediaControl");
+  const [selectedTab, setSelectedTab] = useState("deviceInfo");
 
   useEffect(() => {
     console.log(
@@ -86,9 +86,9 @@ const SourceTabs = ({ device }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabMenu}
         >
+          {TabButton("deviceInfo", "Source Info")}
           {TabButton("mediaControl", "Source Control")}
           {TabButton("settings", "Settings")}
-          {TabButton("deviceInfo", "Source Info")}
           {TabButton("environmental", "Env Sensing")}
           {TabButton("alert", "Alert Notification")}
           {TabButton("genericAccess", "Generic Access")}
@@ -96,6 +96,8 @@ const SourceTabs = ({ device }) => {
 
         {/* Selected tab content. */}
         <View style={styles.screenArea}>
+          {selectedTab === "deviceInfo" && <SourceDeviceInfo device={device} />}
+
           {/*
               SourceMediaControl stays mounted so accelerometer
               notifications continue while visiting another tab.
@@ -110,7 +112,7 @@ const SourceTabs = ({ device }) => {
           </View>
 
           {selectedTab === "settings" && <SourceSettings device={device} />}
-          {selectedTab === "deviceInfo" && <SourceDeviceInfo device={device} />}
+
           {selectedTab === "genericAccess" && <GenericAccess device={device} />}
           {/*
               SourceEnvironmental always stays mounted.

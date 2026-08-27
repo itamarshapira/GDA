@@ -1,6 +1,6 @@
 // src/components/Navbar/Navbar.js
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -68,6 +68,13 @@ const Navbar = (props) => {
   const [connectionPhase, setConnectionPhase] = useState(null);
   const bleActionInProgressRef = useRef(false);
 
+  // Small startup hint that points the user toward the BLE button.
+  const [showBleHint, setShowBleHint] = useState(false);
+
+  const bleHintOpacity = useRef(new Animated.Value(0)).current;
+
+  const bleHintTimerRef = useRef(null);
+
   // NEW STATE: To control the visibility of the error message
   const [scanError, setScanError] = useState(false);
 
@@ -124,7 +131,54 @@ const Navbar = (props) => {
     }, 5000); // 3 seconds visible
   };
 
+  // *hide the BLE hint and clear any existing timers start
+  const hideBleHint = () => {
+    // this function hides the BLE hint and clears any existing timers
+    if (bleHintTimerRef.current) {
+      clearTimeout(bleHintTimerRef.current);
+      bleHintTimerRef.current = null;
+    }
+
+    Animated.timing(bleHintOpacity, {
+      toValue: 0,
+      duration: 800, // Fade out over 0.5 seconds
+      useNativeDriver: true,
+    }).start(() => {
+      setShowBleHint(false);
+    });
+  };
+
+  useEffect(() => {
+    // Show the BLE hint on first render
+    // Wait a little so the screen finishes appearing first.
+    const showTimer = setTimeout(() => {
+      setShowBleHint(true);
+
+      Animated.timing(bleHintOpacity, {
+        toValue: 1, // Fade in to fully visible
+        duration: 350, // Fade in over 0.35 seconds
+        useNativeDriver: true,
+      }).start();
+
+      // Automatically disappear after a few seconds.
+      bleHintTimerRef.current = setTimeout(() => {
+        hideBleHint();
+      }, 8000); // Hide after 8 seconds
+    }, 700); // * Wait 0.7 seconds before showing the hint
+
+    return () => {
+      clearTimeout(showTimer);
+
+      if (bleHintTimerRef.current) {
+        clearTimeout(bleHintTimerRef.current);
+      }
+    };
+  }, []);
+  // *hide the BLE hint and clear any existing timers end
+
+  // Handle Bluetooth icon press
   const handleBluetoothPress = async () => {
+    hideBleHint(); // Hide the hint if the user presses the button
     // State updates are asynchronous, so use a ref to block a second press immediately.
     // This prevents overlapping scans while Bluetooth state/permissions are checked.
     if (bleActionInProgressRef.current) return;
@@ -251,6 +305,43 @@ const Navbar = (props) => {
         </Animated.View>
       )}
       {/* End Error Toast */}
+
+      {/* Small startup BLE hint */}
+      {showBleHint && !isBluetoothOn && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            bleHintStyles.container,
+            {
+              opacity: bleHintOpacity,
+              transform: [
+                {
+                  translateY: bleHintOpacity.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-4, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View style={bleHintStyles.arrow} />
+
+          <View style={bleHintStyles.row}>
+            <MaterialCommunityIcons
+              name="bluetooth"
+              size={19}
+              color="#8ecbff"
+            />
+
+            <View style={bleHintStyles.textArea}>
+              <Text style={bleHintStyles.title}>Connect your device</Text>
+
+              <Text style={bleHintStyles.subtitle}>Tap Bluetooth to begin</Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
 
       {/* ✅ NEW:
           Disable button while connecting so user doesn't spam clicks.
@@ -468,5 +559,68 @@ const errorStyles = StyleSheet.create({
   toastText: {
     color: "#ffffff",
     fontWeight: "bold",
+  },
+});
+
+const bleHintStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    top: 65,
+    right: 25,
+
+    width: 200,
+
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+
+    backgroundColor: "rgba(8, 24, 44, 0.97)",
+
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(108, 180, 255, 0.28)",
+
+    zIndex: 20,
+    elevation: 8,
+  },
+
+  arrow: {
+    position: "absolute",
+
+    top: -7,
+    right: 22,
+
+    width: 0,
+    height: 0,
+
+    borderLeftWidth: 7,
+    borderRightWidth: 7,
+    borderBottomWidth: 7,
+
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "rgba(240, 244, 248, 0.97)",
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  textArea: {
+    marginLeft: 9,
+    flex: 1,
+  },
+
+  title: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  subtitle: {
+    color: "rgba(217,236,255,0.68)",
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 1,
   },
 });

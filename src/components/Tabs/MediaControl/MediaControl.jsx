@@ -37,7 +37,7 @@ const MediaControl = ({ device, onResolutionChanged }) => {
   const axisSubRef = useRef(null);
 
   // Selected zoom/resolution button feedback.
-  const [selectedResolution, setSelectedResolution] = useState(null);
+  const [selectedResolution, setSelectedResolution] = useState(1);
 
   // -------------------------------------------
   // READ CURRENT MEDIA CONTROL STATE
