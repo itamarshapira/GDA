@@ -81,10 +81,10 @@ const Tabs = ({ device }) => {
           contentContainerStyle={styles.tabMenu}
         >
           {TabButton("mediaControl", "Device Control")}
-          {TabButton("alert", "Alert Notification")}
+          {TabButton("deviceInfo", "Device Info")}
           {TabButton("environmental", "Env Sensing")}
           {TabButton("settings", "Settings")}
-          {TabButton("deviceInfo", "Device Info")}
+          {TabButton("alert", "Alert Notification")}
           {TabButton("generic", "Generic Access")}
 
           {TabButton("battery", "Battery")}

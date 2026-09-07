@@ -58,6 +58,10 @@ if (showAnimatedSplash) {
         console.log(" App js: Connected device type received by App.js:", type);
         }}
         onBleDisconnected={() => {
+              console.log(
+                "App.js: Returning to Home screen:",
+                new Date().toISOString(),
+              );
           setConnectedDevice(null);  // Clear device
           setIsConnected(false);     // BLE disconnected
           setIsLoggedIn(false);      // Reset login state

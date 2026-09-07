@@ -68,6 +68,15 @@ const Navbar = (props) => {
   const [connectionPhase, setConnectionPhase] = useState(null);
   const bleActionInProgressRef = useRef(false);
 
+  // NEW refs to manage BLE disconnect events and avoid false positives when the user manually disconnects.
+  const intentionalDisconnectRef = useRef(false);
+  const disconnectSubscriptionRef = useRef(null);
+  const disconnectVerificationTimerRef = useRef(null);
+  const disconnectEventPendingRef = useRef(false);
+  const monitoredDeviceRef = useRef(null);
+  const disconnectMonitorGenerationRef = useRef(0);
+  const onBleDisconnectedRef = useRef(props.onBleDisconnected);
+
   // Small startup hint that points the user toward the BLE button.
   const [showBleHint, setShowBleHint] = useState(false);
 
@@ -83,6 +92,159 @@ const Navbar = (props) => {
 
   const [bluetoothOff, setBluetoothOff] = useState(false); // Bluetooth OFF toast state
   const fadeBtAnim = useState(new Animated.Value(0))[0]; // Animation value for Bluetooth OFF toast
+
+  // NEW STATE: To control the visibility of the connection lost message
+  const [connectionLost, setConnectionLost] = useState(false);
+  const fadeConnectionLostAnim = useRef(new Animated.Value(0)).current;
+  const connectionLostToastTimerRef = useRef(null);
+
+  useEffect(() => {
+    onBleDisconnectedRef.current = props.onBleDisconnected;
+  }, [props.onBleDisconnected]);
+
+  const showConnectionLostToast = () => {
+    if (connectionLostToastTimerRef.current) {
+      clearTimeout(connectionLostToastTimerRef.current);
+    }
+
+    setConnectionLost(true);
+    fadeConnectionLostAnim.setValue(0);
+    Animated.timing(fadeConnectionLostAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    connectionLostToastTimerRef.current = setTimeout(() => {
+      // Hide the toast after 10 seconds
+      Animated.timing(fadeConnectionLostAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => setConnectionLost(false));
+      connectionLostToastTimerRef.current = null;
+    }, 10000);
+  };
+
+  useEffect(() => {
+    disconnectSubscriptionRef.current?.remove();
+    disconnectSubscriptionRef.current = null;
+
+    if (disconnectVerificationTimerRef.current) {
+      clearTimeout(disconnectVerificationTimerRef.current);
+      disconnectVerificationTimerRef.current = null;
+    }
+    disconnectEventPendingRef.current = false;
+
+    const monitorGeneration = ++disconnectMonitorGenerationRef.current;
+    monitoredDeviceRef.current = connectedDevice;
+
+    if (!connectedDevice) return;
+
+    const deviceId = connectedDevice.id;
+
+    disconnectSubscriptionRef.current = manager.onDeviceDisconnected(
+      deviceId,
+      () => {
+        console.log(
+          "Navbar.jsx: BLE disconnect event received:",
+          deviceId,
+          new Date().toISOString(),
+        );
+
+        if (intentionalDisconnectRef.current) {
+          intentionalDisconnectRef.current = false;
+          console.log(
+            "Navbar.jsx: Manual disconnect - connection loss notification suppressed",
+          );
+          return;
+        }
+
+        if (disconnectEventPendingRef.current) return;
+        disconnectEventPendingRef.current = true;
+
+        disconnectVerificationTimerRef.current = setTimeout(async () => {
+          disconnectVerificationTimerRef.current = null;
+
+          if (
+            monitorGeneration !== disconnectMonitorGenerationRef.current ||
+            monitoredDeviceRef.current?.id !== deviceId
+          ) {
+            console.log(
+              "Navbar.jsx: Stale disconnect event ignored:",
+              deviceId,
+            );
+            disconnectEventPendingRef.current = false;
+            return;
+          }
+
+          try {
+            const isConnected = await manager.isDeviceConnected(deviceId);
+
+            if (isConnected) {
+              console.log(
+                "Navbar.jsx: Device reconnected - ignoring temporary disconnect",
+                new Date().toISOString(),
+              );
+              disconnectEventPendingRef.current = false;
+              return;
+            }
+          } catch (error) {
+            console.log(
+              "Navbar.jsx: Connection verification failed; treating device as disconnected:",
+              error?.message || error,
+            );
+          }
+
+          if (
+            monitorGeneration !== disconnectMonitorGenerationRef.current ||
+            monitoredDeviceRef.current?.id !== deviceId
+          ) {
+            console.log(
+              "Navbar.jsx: Stale disconnect result ignored:",
+              deviceId,
+            );
+            disconnectEventPendingRef.current = false;
+            return;
+          }
+
+          console.log(
+            "Navbar.jsx: Unexpected BLE connection lost:",
+            new Date().toISOString(),
+          );
+          disconnectSubscriptionRef.current?.remove();
+          disconnectSubscriptionRef.current = null;
+          monitoredDeviceRef.current = null;
+          disconnectMonitorGenerationRef.current += 1;
+          setConnectedDevice(null);
+          setIsBluetoothOn(false);
+          setConnectionPhase(null);
+          showConnectionLostToast();
+          onBleDisconnectedRef.current();
+        }, 1800);
+      },
+    );
+
+    return () => {
+      disconnectSubscriptionRef.current?.remove();
+      disconnectSubscriptionRef.current = null;
+
+      if (disconnectVerificationTimerRef.current) {
+        clearTimeout(disconnectVerificationTimerRef.current);
+        disconnectVerificationTimerRef.current = null;
+      }
+      disconnectEventPendingRef.current = false;
+    };
+  }, [connectedDevice]);
+
+  useEffect(() => {
+    return () => {
+      if (connectionLostToastTimerRef.current) {
+        clearTimeout(connectionLostToastTimerRef.current);
+      }
+    };
+  }, []);
+  // End of the new connection lost toast logic
 
   // Shows the Bluetooth OFF message with fade animation
   const showBluetoothOffToast = () => {
@@ -201,13 +363,19 @@ const Navbar = (props) => {
       // 2) If already connected, pressing the BLE icon means disconnect.
       if (connectedDevice) {
         setConnectionPhase("disconnecting");
+        intentionalDisconnectRef.current = true;
 
         const success = await disconnectDevice(connectedDevice);
 
         if (success) {
+          monitoredDeviceRef.current = null;
+          disconnectMonitorGenerationRef.current += 1;
+          intentionalDisconnectRef.current = false;
           setConnectedDevice(null);
           setIsBluetoothOn(false);
           props.onBleDisconnected(); // Tell App.js we are disconnected
+        } else {
+          intentionalDisconnectRef.current = false;
         }
 
         return;
@@ -305,6 +473,46 @@ const Navbar = (props) => {
         </Animated.View>
       )}
       {/* End Error Toast */}
+
+      {/* NEW: Connection Lost Toast */}
+
+      {connectionLost && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            connectionLostStyles.container,
+            {
+              opacity: fadeConnectionLostAnim,
+              transform: [
+                {
+                  translateY: fadeConnectionLostAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-8, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          {/* Warning icon */}
+          <View style={connectionLostStyles.iconContainer}>
+            <MaterialCommunityIcons
+              name="bluetooth-off"
+              size={24}
+              color="#ff6b6b"
+            />
+          </View>
+
+          {/* Text */}
+          <View style={connectionLostStyles.textContainer}>
+            <Text style={connectionLostStyles.title}>Connection Lost</Text>
+
+            <Text style={connectionLostStyles.message}>
+              Device disconnected. Please reconnect.
+            </Text>
+          </View>
+        </Animated.View>
+      )}
 
       {/* Small startup BLE hint */}
       {showBleHint && !isBluetoothOn && (
@@ -559,6 +767,78 @@ const errorStyles = StyleSheet.create({
   toastText: {
     color: "#ffffff",
     fontWeight: "bold",
+  },
+  toastTitle: {
+    // New title style for the connection lost toast
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 2,
+  },
+});
+
+const connectionLostStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+
+    // Same position as the other Navbar notifications
+    top: 65,
+    left: 20,
+    right: 20,
+
+    // Match the dark-blue application style
+    backgroundColor: "rgba(8, 24, 44, 0.97)",
+
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+
+    borderRadius: 16,
+
+    // Small red accent instead of a full bright-red box
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.45)",
+
+    flexDirection: "row",
+    alignItems: "center",
+
+    zIndex: 20,
+    elevation: 10,
+  },
+
+  iconContainer: {
+    width: 40,
+    height: 40,
+
+    borderRadius: 20,
+
+    backgroundColor: "rgba(255, 107, 107, 0.12)",
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    marginRight: 12,
+  },
+
+  textContainer: {
+    flex: 1,
+  },
+
+  title: {
+    color: "#ffffff",
+
+    fontSize: 15,
+    fontWeight: "900",
+
+    letterSpacing: 0.2,
+  },
+
+  message: {
+    color: "rgba(217,236,255,0.72)",
+
+    fontSize: 12,
+    fontWeight: "600",
+
+    marginTop: 2,
   },
 });
 
