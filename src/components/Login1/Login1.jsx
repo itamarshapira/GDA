@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// src/components/Login1/Login1.jsx
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -6,7 +8,13 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { writePasskey } from "../../services/loginService";
 import {
   forceRefreshGatt,
@@ -15,6 +23,17 @@ import {
 } from "../../services/bleService";
 
 const Login1 = ({ device, onLogin }) => {
+  const scrollViewRef = useRef(null);
+
+  // Keep the passkey field in view once the keyboard has finished opening.
+  useEffect(() => {
+    const keyboardSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    });
+
+    return () => keyboardSubscription.remove();
+  }, []);
+
   // ✅ user types passkey here
   const [passkey, setPasskey] = useState("");
 
@@ -72,179 +91,284 @@ const Login1 = ({ device, onLogin }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* ✅ Card wrapper: gives the login a "panel" look */}
-      <View style={styles.card}>
-        <Text style={styles.title}>FGAS Login</Text>
-        <Text style={styles.subtitle}>Enter detector passkey</Text>
-
-        <TextInput
-          style={styles.input}
-          value={passkey}
-          onChangeText={setPasskey}
-          placeholder="Passkey (e.g. 123456)"
-          placeholderTextColor="#9aa0a6"
-          keyboardType="numeric"
-          editable={!isLoading}
-        />
-
-        {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
-
-        <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={handleLoginPress}
-          disabled={isLoading}
-          activeOpacity={0.85}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <LinearGradient
+        colors={["#061629", "#082b50", "#0b3d6e"]}
+        locations={[0, 0.55, 1]}
+        start={{ x: 0.15, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={styles.background}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {isLoading ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color="#ffffff" />
-              <Text style={styles.buttonText}>Logging in...</Text>
-            </View>
-          ) : (
-            <Text style={styles.buttonText}>Login</Text>
-          )}
-        </TouchableOpacity>
+          <LinearGradient
+            colors={[
+              "rgba(74, 170, 255, 0.80)",
+              "rgba(77, 112, 255, 0.45)",
+              "rgba(41, 103, 176, 0.22)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cardBorder}
+          >
+            <LinearGradient
+              colors={[
+                "rgba(17, 59, 99, 0.97)",
+                "rgba(8, 34, 62, 0.98)",
+                "rgba(6, 25, 47, 0.99)",
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.card}
+            >
+              <LinearGradient
+                colors={["#35a7ff", "#347cff", "#5c6cff"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.productBadge}
+              >
+                <Text style={styles.productBadgeText}>FGD MOBILE</Text>
+              </LinearGradient>
 
-        {!device && (
-          <Text style={styles.hint}>Connect Bluetooth device first.</Text>
-        )}
-      </View>
-    </View>
+              <LinearGradient
+                colors={["rgba(62,161,255,0.24)", "rgba(38,91,151,0.11)"]}
+                style={styles.iconCircle}
+              >
+                <MaterialCommunityIcons
+                  name="lock-outline"
+                  size={27}
+                  color="#8ecbff"
+                />
+              </LinearGradient>
+
+              <Text style={styles.title}>Device Login</Text>
+              <Text style={styles.subtitle}>
+                Enter your device passkey to continue
+              </Text>
+
+              <LinearGradient
+                colors={[
+                  "rgba(70,174,255,0)",
+                  "#46aeff",
+                  "#6675ff",
+                  "rgba(102,117,255,0)",
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.divider}
+              />
+
+              <View style={styles.form}>
+                <Text style={styles.inputLabel}>DEVICE PASSKEY</Text>
+                <TextInput
+                  style={styles.input}
+                  value={passkey}
+                  onChangeText={setPasskey}
+                  placeholder="Passkey (e.g. 123456)"
+                  placeholderTextColor="#9aa0a6"
+                  keyboardType="numeric"
+                  editable={!isLoading}
+                />
+
+                {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+
+                <TouchableOpacity
+                  style={[
+                    styles.buttonTouchable,
+                    isLoading && styles.buttonDisabled,
+                  ]}
+                  onPress={handleLoginPress}
+                  disabled={isLoading}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={["#35a7ff", "#347cff", "#5c6cff"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.buttonGradient}
+                  >
+                    {isLoading ? (
+                      <View style={styles.loadingRow}>
+                        <ActivityIndicator color="#ffffff" />
+                        <Text style={styles.buttonText}>Logging in...</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.loadingRow}>
+                        <MaterialCommunityIcons
+                          name="login"
+                          size={20}
+                          color="#ffffff"
+                        />
+                        <Text style={styles.buttonText}>Login</Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {!device && (
+                  <Text style={styles.hint}>
+                    Connect Bluetooth device first.
+                  </Text>
+                )}
+              </View>
+            </LinearGradient>
+          </LinearGradient>
+        </ScrollView>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 };
 
 export default Login1;
 
 const styles = StyleSheet.create({
-  // Main screen background.
-  // Why:
-  // - Uses dark navy instead of neutral black.
-  // - Feels closer to a technical FGD system UI.
   container: {
     flex: 1,
+  },
+  background: {
+    flex: 1,
+    width: "100%",
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 18,
-    backgroundColor: "#07111f",
+    paddingVertical: 24,
   },
-
-  // Login card / panel.
-  // Why:
-  // - Looks like a clean control panel.
-  // - Blue border connects it visually to the FGD app colors.
+  cardBorder: {
+    width: "100%",
+    maxWidth: 520,
+    borderRadius: 29,
+    padding: 1.2,
+    shadowColor: "#2d96ff",
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 10,
+  },
   card: {
     width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    backgroundColor: "#0d1b2f",
-    borderRadius: 22,
-    paddingVertical: 42,
-    paddingHorizontal: 34,
-    marginBottom: 180,
-
-    // Android shadow.
-    elevation: 10,
-
-    // Blue/white FGD-style border.
-    borderWidth: 1,
-    borderColor: "rgba(66, 153, 225, 0.45)",
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 24,
+    alignItems: "center",
   },
-
-  // Main title.
-  // Why:
-  // - White and bold for clear hierarchy.
+  productBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 999,
+    marginBottom: 19,
+  },
+  productBadgeText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 1.4,
+  },
+  iconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(111, 190, 255, 0.22)",
+  },
   title: {
     color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: 0.3,
-    marginBottom: 6,
+    fontSize: 27,
+    fontWeight: "900",
     textAlign: "center",
+    letterSpacing: 0.2,
   },
-
-  // Small explanation under the title.
-  // Why:
-  // - Softer white keeps it readable but not too strong.
   subtitle: {
-    color: "rgba(255,255,255,0.70)",
-    marginTop: 6,
-    marginBottom: 22,
+    color: "rgba(219, 238, 255, 0.72)",
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: "600",
     textAlign: "center",
+    lineHeight: 20,
+    marginTop: 7,
+    paddingHorizontal: 10,
   },
-
-  // Passkey input.
-  // Why:
-  // - Dark input fits the card.
-  // - Blue border makes it feel connected to the app theme.
+  divider: {
+    width: "72%",
+    height: 1,
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  form: {
+    width: "100%",
+  },
+  inputLabel: {
+    color: "rgba(219, 238, 255, 0.86)",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    marginBottom: 9,
+  },
   input: {
     width: "100%",
+    minHeight: 49,
     borderWidth: 1,
-    borderColor: "rgba(66, 153, 225, 0.35)",
+    borderColor: "rgba(83, 169, 255, 0.32)",
     borderRadius: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
     paddingHorizontal: 15,
     color: "#ffffff",
     fontSize: 16,
-    backgroundColor: "#07111f",
+    backgroundColor: "rgba(6, 25, 47, 0.85)",
   },
-
-  // Primary login button.
-  // Why:
-  // - Blue replaces green, so the screen matches FGD colors.
-  // - Still strong enough to show this is the main action.
-  button: {
+  error: {
+    marginTop: 11,
+    color: "#ff8585",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  buttonTouchable: {
     width: "100%",
-    marginTop: 24,
+    marginTop: 22,
     borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-    backgroundColor: "#2f80ed",
+    overflow: "hidden",
   },
-
-  // Used while login is running.
-  // Why:
-  // - Shows the user they cannot press again while BLE login is in progress.
+  buttonGradient: {
+    minHeight: 50,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 14,
+  },
   buttonDisabled: {
     opacity: 0.65,
   },
-
-  // Button text.
-  // Why:
-  // - White works better on blue than dark text.
   buttonText: {
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "800",
   },
-
-  // Loading spinner + text row.
-  // Why:
-  // - Keeps spinner and text aligned nicely.
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 10,
   },
-
-  // Error message.
-  // Why:
-  // - Red stays because errors must be obvious.
-  error: {
-    marginTop: 10,
-    color: "#ff6b6b",
-    fontWeight: "700",
-    textAlign: "center",
-  },
-
-  // Small helper text when no BLE device exists.
-  // Why:
-  // - Soft white avoids making it look like an error.
   hint: {
     marginTop: 14,
-    color: "rgba(255,255,255,0.60)",
+    color: "rgba(204, 228, 249, 0.62)",
     fontSize: 13,
     textAlign: "center",
   },
