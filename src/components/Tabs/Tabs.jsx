@@ -82,11 +82,11 @@ const Tabs = ({ device }) => {
         >
           {TabButton("mediaControl", "Device Control")}
           {TabButton("deviceInfo", "Device Info")}
-          {TabButton("environmental", "Env Sensing")}
+          {TabButton("environmental", "Measurement")}{" "}
+          {/*name cahnge from Environmental to Measurement */}
           {TabButton("settings", "Settings")}
           {TabButton("alert", "Alert Notification")}
           {TabButton("generic", "Generic Access")}
-
           {TabButton("battery", "Battery")}
           {TabButton("logs", "Logs")}
           {TabButton("upgrade", "Firmware")}
@@ -139,7 +139,7 @@ const Tabs = ({ device }) => {
             <Text style={styles.fakeText}>Battery Coming Soon </Text>
           )}
           {selectedTab === "logs" && (
-            <Text style={styles.fakeText}>Logs Coming Soon</Text>
+            <Text style={styles.fakeText}>Logs Coming Soon!!!!!!!</Text>
           )}
           {selectedTab === "upgrade" && (
             <Text style={styles.fakeText}>Firmware Update Coming Soon</Text>

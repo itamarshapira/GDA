@@ -7,13 +7,13 @@ import {
   Image,
   TouchableOpacity,
   Animated,
-  StyleSheet,
   ActivityIndicator, // ✅ NEW: for spinner/loading UI
   Modal,
   FlatList,
 } from "react-native";
 import styles from "./NavbarStyles";
-import { MaterialCommunityIcons } from "@expo/vector-icons"; // https://static.enapter.com/rn/icons/material-community.html
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient"; // https://static.enapter.com/rn/icons/material-community.html
 import {
   scanForFGDevices,
   connectToSelectedDevice,
@@ -437,24 +437,29 @@ const Navbar = (props) => {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={["#06182b", "#082b4f", "#092c52"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.container}
+    >
       <Image
         source={require("../../../assets/wideLogo.png")}
         style={styles.logo}
       />
 
-      {/* ✅ NEW: Loading Banner UI */}
+      {/* Loading / scanning / connecting status */}
       {connectionPhase && (
-        <View style={loadingStyles.loadingPill}>
+        <View style={styles.loadingPill}>
           <ActivityIndicator size="small" color="#8ecbff" />
 
-          <Text style={loadingStyles.loadingText}>
+          <Text style={styles.loadingText}>
             {connectionPhase === "scanning"
               ? "Searching for FG devices…"
               : connectionPhase === "retrying"
                 ? "Still searching for FG devices…"
                 : connectionPhase === "connecting"
-                  ? "Connecting to detector…"
+                  ? "Connecting to device…"
                   : connectionPhase === "disconnecting"
                     ? "Disconnecting…"
                     : "Preparing Bluetooth…"}
@@ -462,25 +467,46 @@ const Navbar = (props) => {
         </View>
       )}
 
-      {/* NEW: Error Toast UI element */}
+      {/* Device scan / connection error */}
       {scanError && (
         <Animated.View
-          style={[errorStyles.toastContainer, { opacity: fadeAnim }]}
+          pointerEvents="none"
+          style={[
+            styles.toastContainer,
+            styles.toastErrorBorder,
+            {
+              opacity: fadeAnim,
+              transform: [
+                {
+                  translateY: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-8, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
         >
-          <Text style={errorStyles.toastText}>
-            🚫 Device not found! Scan timed out.
-          </Text>
+          <View style={[styles.toastIconContainer, styles.toastErrorIcon]}>
+            <MaterialCommunityIcons name="radar" size={23} color="#ff6b6b" />
+          </View>
+
+          <View style={styles.toastTextContainer}>
+            <Text style={styles.toastTitle}>Device Not Found</Text>
+            <Text style={styles.toastMessage}>
+              Scan timed out. Make sure the device is powered on and nearby.
+            </Text>
+          </View>
         </Animated.View>
       )}
-      {/* End Error Toast */}
 
-      {/* NEW: Connection Lost Toast */}
-
+      {/* Unexpected BLE connection loss */}
       {connectionLost && (
         <Animated.View
           pointerEvents="none"
           style={[
-            connectionLostStyles.container,
+            styles.toastContainer,
+            styles.toastErrorBorder,
             {
               opacity: fadeConnectionLostAnim,
               transform: [
@@ -494,8 +520,7 @@ const Navbar = (props) => {
             },
           ]}
         >
-          {/* Warning icon */}
-          <View style={connectionLostStyles.iconContainer}>
+          <View style={[styles.toastIconContainer, styles.toastErrorIcon]}>
             <MaterialCommunityIcons
               name="bluetooth-off"
               size={24}
@@ -503,11 +528,9 @@ const Navbar = (props) => {
             />
           </View>
 
-          {/* Text */}
-          <View style={connectionLostStyles.textContainer}>
-            <Text style={connectionLostStyles.title}>Connection Lost</Text>
-
-            <Text style={connectionLostStyles.message}>
+          <View style={styles.toastTextContainer}>
+            <Text style={styles.toastTitle}>Connection Lost</Text>
+            <Text style={styles.toastMessage}>
               Device disconnected. Please reconnect.
             </Text>
           </View>
@@ -519,7 +542,7 @@ const Navbar = (props) => {
         <Animated.View
           pointerEvents="none"
           style={[
-            bleHintStyles.container,
+            styles.bleHintContainer,
             {
               opacity: bleHintOpacity,
               transform: [
@@ -533,33 +556,29 @@ const Navbar = (props) => {
             },
           ]}
         >
-          <View style={bleHintStyles.arrow} />
+          <View style={styles.bleHintArrow} />
 
-          <View style={bleHintStyles.row}>
+          <View style={styles.bleHintRow}>
             <MaterialCommunityIcons
               name="bluetooth"
               size={19}
               color="#8ecbff"
             />
 
-            <View style={bleHintStyles.textArea}>
-              <Text style={bleHintStyles.title}>Connect your device</Text>
-
-              <Text style={bleHintStyles.subtitle}>Tap Bluetooth to begin</Text>
+            <View style={styles.bleHintTextArea}>
+              <Text style={styles.bleHintTitle}>Connect your device</Text>
+              <Text style={styles.bleHintSubtitle}>Tap Bluetooth to begin</Text>
             </View>
           </View>
         </Animated.View>
       )}
 
-      {/* ✅ NEW:
-          Disable button while connecting so user doesn't spam clicks.
-          Also reduce opacity while disabled for clear feedback.
-      */}
+      {/* Bluetooth action button — intentionally kept clean, with no circle */}
       <TouchableOpacity
         onPress={handleBluetoothPress}
         disabled={!!connectionPhase}
         style={{ opacity: connectionPhase ? 0.5 : 1 }}
-        activeOpacity={0.1}
+        activeOpacity={0.2}
       >
         <MaterialCommunityIcons
           name={isBluetoothOn ? "bluetooth-connect" : "bluetooth-off"}
@@ -568,339 +587,176 @@ const Navbar = (props) => {
           style={styles.icon}
         />
       </TouchableOpacity>
-      {/* End Bluetooth Icon */}
 
-      {/* NEW: Bluetooth OFF Toast */}
+      {/* Bluetooth is disabled on the phone */}
       {bluetoothOff && (
         <Animated.View
-          style={[errorStyles.toastContainer, { opacity: fadeBtAnim }]}
+          pointerEvents="none"
+          style={[
+            styles.toastContainer,
+            styles.toastInfoBorder,
+            {
+              opacity: fadeBtAnim,
+              transform: [
+                {
+                  translateY: fadeBtAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-8, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
         >
-          <Text style={errorStyles.toastText}>
-            Turn on Bluetooth on your phone
-          </Text>
-        </Animated.View>
-      )}
-      <Modal transparent visible={showPicker} animationType="fade">
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            justifyContent: "center",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              margin: 20,
-              borderRadius: 10,
-              padding: 10,
-            }}
-          >
-            <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-              Select FG Device
-            </Text>
-
-            <FlatList
-              data={foundDevices}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => {
-                // Use a fallback name in case the BLE device does not advertise a name.
-                const deviceName = item.name || "Unnamed device";
-
-                /*
-                 * Read the final letter immediately before the numeric serial.
-                 *
-                 * Examples:
-                 * FGASD794 -> D -> Detector
-                 * FGASS794 -> S -> Source
-                 *
-                 * The "$" means the numbers must be at the end of the device name.
-                 */
-                const nameMatch = deviceName.trim().match(/([A-Za-z])\d+$/);
-
-                const typeLetter = nameMatch
-                  ? nameMatch[1].toUpperCase()
-                  : null;
-
-                //* Convert the detected letter into a readable UI label:
-
-                // Internal value used by the app's navigation logic.
-                let deviceType = null;
-
-                // Readable value displayed to the user in the BLE list.
-                let deviceTypeLabel = "Unknown device type";
-
-                if (typeLetter === "D") {
-                  deviceType = "detector";
-                  deviceTypeLabel = "Detector";
-                } else if (typeLetter === "S") {
-                  deviceType = "source";
-                  deviceTypeLabel = "Source";
-                }
-
-                return (
-                  <TouchableOpacity
-                    style={{
-                      padding: 12,
-                      borderBottomWidth: 1,
-                    }}
-                    onPress={async () => {
-                      try {
-                        // Close the BLE device picker after the user selects a device.
-                        setShowPicker(false);
-
-                        // We finished scanning and are now connecting to the selected device.
-                        setConnectionPhase("connecting");
-
-                        console.log("🔗 Connecting to selected:", deviceName);
-
-                        const connected = await connectToSelectedDevice(item);
-
-                        // Save the connected BLE device locally inside Navbar.
-                        setConnectedDevice(connected);
-
-                        // Change the BLE icon to its connected state.
-                        setIsBluetoothOn(true);
-
-                        /*
-                         * Tell App.js that BLE connected successfully.
-                         *
-                         * At this stage we are still sending only the BLE device.
-                         * We are not routing to SourceTabs yet.
-                         */
-                        // Send both the connected BLE device and its detected type to App.js.
-                        props.onBleConnected(connected, deviceType);
-
-                        // Hide the connection banner after successful connection.
-                        setConnectionPhase(null);
-                      } catch (e) {
-                        console.log("❌ Selected connect failed:", e.message);
-
-                        // Hide the connection banner if connection failed.
-                        setConnectionPhase(null);
-
-                        // Show the existing connection error notification.
-                        showErrorToast();
-                      }
-                    }}
-                  >
-                    {/* BLE advertised device name */}
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: "700",
-                      }}
-                    >
-                      {deviceName}
-                    </Text>
-
-                    {/* Device type detected automatically from the device name */}
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        marginTop: 3,
-                        color: "#666",
-                      }}
-                    >
-                      {deviceTypeLabel}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
+          <View style={[styles.toastIconContainer, styles.toastInfoIcon]}>
+            <MaterialCommunityIcons
+              name="bluetooth-off"
+              size={23}
+              color="#8ecbff"
             />
           </View>
+
+          <View style={styles.toastTextContainer}>
+            <Text style={styles.toastTitle}>Bluetooth Is Off</Text>
+            <Text style={styles.toastMessage}>
+              Turn on Bluetooth on your phone to connect.
+            </Text>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Device picker */}
+      <Modal transparent visible={showPicker} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <LinearGradient
+            colors={[
+              "rgba(74, 170, 255, 0.72)",
+              "rgba(77, 112, 255, 0.38)",
+              "rgba(41, 103, 176, 0.22)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.modalBorder}
+          >
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalHeaderIcon}>
+                  <MaterialCommunityIcons
+                    name="bluetooth"
+                    size={22}
+                    color="#8ecbff"
+                  />
+                </View>
+
+                <View style={styles.modalHeaderTextArea}>
+                  <Text style={styles.modalTitle}>Select FG Device</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Choose a nearby Detector or Source
+                  </Text>
+                </View>
+              </View>
+
+              <FlatList
+                data={foundDevices}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.deviceList}
+                renderItem={({ item }) => {
+                  // Use a fallback name in case the BLE device does not advertise a name.
+                  const deviceName = item.name || "Unnamed device";
+
+                  /*
+                   * Read the final letter immediately before the numeric serial.
+                   *
+                   * Examples:
+                   * FGASD794 -> D -> Detector
+                   * FGASS794 -> S -> Source
+                   */
+                  const nameMatch = deviceName.trim().match(/([A-Za-z])\d+$/);
+
+                  const typeLetter = nameMatch
+                    ? nameMatch[1].toUpperCase()
+                    : null;
+
+                  // Internal value used by the app's navigation logic.
+                  let deviceType = null;
+
+                  // Readable value displayed to the user in the BLE list.
+                  let deviceTypeLabel = "Unknown device type";
+
+                  if (typeLetter === "D") {
+                    deviceType = "detector";
+                    deviceTypeLabel = "Detector";
+                  } else if (typeLetter === "S") {
+                    deviceType = "source";
+                    deviceTypeLabel = "Source";
+                  }
+
+                  return (
+                    <TouchableOpacity
+                      style={styles.deviceRow}
+                      activeOpacity={0.65}
+                      onPress={async () => {
+                        try {
+                          // Close the BLE device picker after the user selects a device.
+                          setShowPicker(false);
+
+                          // We finished scanning and are now connecting to the selected device.
+                          setConnectionPhase("connecting");
+
+                          console.log("🔗 Connecting to selected:", deviceName);
+
+                          const connected = await connectToSelectedDevice(item);
+
+                          // Save the connected BLE device locally inside Navbar.
+                          setConnectedDevice(connected);
+
+                          // Change the BLE icon to its connected state.
+                          setIsBluetoothOn(true);
+
+                          // Send both the connected BLE device and its detected type to App.js.
+                          props.onBleConnected(connected, deviceType);
+
+                          // Hide the connection banner after successful connection.
+                          setConnectionPhase(null);
+                        } catch (e) {
+                          console.log("❌ Selected connect failed:", e.message);
+
+                          // Hide the connection banner if connection failed.
+                          setConnectionPhase(null);
+
+                          // Show the connection error notification.
+                          showErrorToast();
+                        }
+                      }}
+                    >
+                      <View style={styles.deviceTextArea}>
+                        <Text style={styles.deviceName}>{deviceName}</Text>
+                        <Text style={styles.deviceType}>{deviceTypeLabel}</Text>
+                      </View>
+
+                      <MaterialCommunityIcons
+                        name="chevron-right"
+                        size={24}
+                        color="rgba(217,236,255,0.48)"
+                      />
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                activeOpacity={0.65}
+                onPress={() => setShowPicker(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
         </View>
       </Modal>
-    </View>
+    </LinearGradient>
   );
 };
 
 export default Navbar;
-
-// ✅ NEW: Loading pill styles
-const loadingStyles = StyleSheet.create({
-  loadingPill: {
-    position: "absolute",
-    top: 65,
-    left: 20,
-    right: 20,
-
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-
-    borderRadius: 16,
-    backgroundColor: "rgba(8, 24, 44, 0.94)",
-    borderWidth: 1,
-    borderColor: "rgba(108, 180, 255, 0.28)",
-
-    zIndex: 9,
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-    justifyContent: "center",
-
-    elevation: 8,
-  },
-
-  loadingText: {
-    color: "#d9ecff",
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.2,
-  },
-});
-
-// NEW: Stylesheet for the Error UI (can be moved to NavbarStyles.js)
-const errorStyles = StyleSheet.create({
-  toastContainer: {
-    position: "absolute", // Position the toast absolutely
-    top: 65, // Adjust this value to position it below the Navbar
-    left: 20,
-    right: 20,
-    backgroundColor: "#ff0000", // Red background for error
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 10, // Ensure it's above other elements
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  toastText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
-  toastTitle: {
-    // New title style for the connection lost toast
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "900",
-    marginBottom: 2,
-  },
-});
-
-const connectionLostStyles = StyleSheet.create({
-  container: {
-    position: "absolute",
-
-    // Same position as the other Navbar notifications
-    top: 65,
-    left: 20,
-    right: 20,
-
-    // Match the dark-blue application style
-    backgroundColor: "rgba(8, 24, 44, 0.97)",
-
-    paddingVertical: 13,
-    paddingHorizontal: 14,
-
-    borderRadius: 16,
-
-    // Small red accent instead of a full bright-red box
-    borderWidth: 1,
-    borderColor: "rgba(255, 107, 107, 0.45)",
-
-    flexDirection: "row",
-    alignItems: "center",
-
-    zIndex: 20,
-    elevation: 10,
-  },
-
-  iconContainer: {
-    width: 40,
-    height: 40,
-
-    borderRadius: 20,
-
-    backgroundColor: "rgba(255, 107, 107, 0.12)",
-
-    alignItems: "center",
-    justifyContent: "center",
-
-    marginRight: 12,
-  },
-
-  textContainer: {
-    flex: 1,
-  },
-
-  title: {
-    color: "#ffffff",
-
-    fontSize: 15,
-    fontWeight: "900",
-
-    letterSpacing: 0.2,
-  },
-
-  message: {
-    color: "rgba(217,236,255,0.72)",
-
-    fontSize: 12,
-    fontWeight: "600",
-
-    marginTop: 2,
-  },
-});
-
-const bleHintStyles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    top: 65,
-    right: 25,
-
-    width: 200,
-
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-
-    backgroundColor: "rgba(8, 24, 44, 0.97)",
-
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(108, 180, 255, 0.28)",
-
-    zIndex: 20,
-    elevation: 8,
-  },
-
-  arrow: {
-    position: "absolute",
-
-    top: -7,
-    right: 22,
-
-    width: 0,
-    height: 0,
-
-    borderLeftWidth: 7,
-    borderRightWidth: 7,
-    borderBottomWidth: 7,
-
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderBottomColor: "rgba(240, 244, 248, 0.97)",
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  textArea: {
-    marginLeft: 9,
-    flex: 1,
-  },
-
-  title: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "800",
-  },
-
-  subtitle: {
-    color: "rgba(217,236,255,0.68)",
-    fontSize: 11,
-    fontWeight: "600",
-    marginTop: 1,
-  },
-});

@@ -1,42 +1,91 @@
+// src/components/Footer/Footer.jsx
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const Footer = () => {
   return (
-    <View style={styles.footer}>
-      <Text style={styles.text}>FG Detection © 2026</Text>
-    </View>
+    <LinearGradient
+      colors={["rgba(8, 31, 57, 0.98)", "rgba(7, 22, 41, 0.99)"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.footer}
+    >
+      {/* Soft blue accent line */}
+      <LinearGradient
+        colors={[
+          "rgba(70,174,255,0)",
+          "rgba(70,174,255,0.65)",
+          "rgba(102,117,255,0.55)",
+          "rgba(102,117,255,0)",
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.topAccent}
+      />
+
+      <View style={styles.content}>
+        <Text style={styles.brand}>FG Detection</Text>
+
+        <Text style={styles.separator}>•</Text>
+
+        <Text style={styles.year}>© 2026</Text>
+      </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  // Bottom footer strip.
-  // Why:
-  // - Matches the new FGD dark navy dashboard style.
-  // - Removes the heavy half-circle shape, which felt separate from the app.
-  // - Keeps it clean and professional like a system footer.
   footer: {
-    minHeight: 44,
+    minHeight: 46,
+
     justifyContent: "center",
     alignItems: "center",
 
-    backgroundColor: "#07111f",
+    paddingVertical: 9,
 
-    borderTopWidth: 1,
-    borderTopColor: "rgba(134, 187, 230, 0.22)",
-
-    paddingVertical: 8,
+    position: "relative",
   },
 
-  // Footer text.
-  // Why:
-  // - Soft white/blue fits the dashboard style.
-  // - Small text keeps footer secondary, not distracting.
-  text: {
-    color: "rgba(255,255,255,0.55)",
+  topAccent: {
+    position: "absolute",
+    top: 0,
+
+    width: "72%",
+    height: 1,
+  },
+
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  brand: {
+    color: "rgba(223, 240, 255, 0.72)",
+
     fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.4,
+    fontWeight: "800",
+
+    letterSpacing: 0.5,
+  },
+
+  separator: {
+    color: "rgba(108, 180, 255, 0.45)",
+
+    fontSize: 10,
+
+    marginHorizontal: 7,
+  },
+
+  year: {
+    color: "rgba(255,255,255,0.38)",
+
+    fontSize: 11,
+    fontWeight: "600",
+
+    letterSpacing: 0.3,
   },
 });
 

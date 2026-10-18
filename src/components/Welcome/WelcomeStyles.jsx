@@ -1,118 +1,256 @@
-// src/components/Welcome/WelcomeStyles.jsx
+// src/components/Welcome/WelcomeStyles.js
+
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
-  bg: {
+  // --------------------------------------------------
+  // PAGE
+  // --------------------------------------------------
+
+  background: {
     flex: 1,
     width: "100%",
-    justifyContent: "center",
-    backgroundColor: "#07111f",
   },
 
-  container: {
-    width: "90%",
+  scrollContent: {
+    flexGrow: 1,
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    paddingHorizontal: 18,
+    paddingVertical: 24,
+  },
+
+  // --------------------------------------------------
+  // MAIN CARD
+  // --------------------------------------------------
+
+  // This outer gradient acts as a premium gradient border.
+  cardBorder: {
+    width: "100%",
     maxWidth: 520,
-    alignSelf: "center",
 
-    paddingVertical: 30,
-    paddingHorizontal: 20,
+    borderRadius: 29,
 
-    backgroundColor: "rgba(8, 24, 44, 0.88)",
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: "rgba(108, 180, 255, 0.28)",
+    padding: 1.2,
+
+    shadowColor: "#2d96ff",
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
 
     elevation: 10,
   },
 
-  badge: {
-    alignSelf: "center",
+  card: {
+    width: "100%",
 
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginBottom: 14,
+    borderRadius: 28,
 
-    borderRadius: 999,
-    backgroundColor: "rgba(66, 153, 225, 0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(66, 153, 225, 0.32)",
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
 
-    color: "#b9ddff",
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 1,
+    alignItems: "center",
   },
 
-  title: {
-    fontSize: 25,
-    fontWeight: "900",
+  // --------------------------------------------------
+  // FGD MOBILE BADGE
+  // --------------------------------------------------
+
+  productBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+
+    borderRadius: 999,
+
+    marginBottom: 18,
+  },
+
+  productBadgeText: {
     color: "#ffffff",
+
+    fontSize: 13,
+    fontWeight: "900",
+
+    letterSpacing: 1.4,
+
+    marginLeft: 7,
+  },
+
+  // --------------------------------------------------
+  // MAIN TEXT
+  // --------------------------------------------------
+
+  title: {
+    color: "#ffffff",
+
+    fontSize: 27,
+    fontWeight: "900",
+
     textAlign: "center",
-    marginBottom: 10,
+
     letterSpacing: 0.2,
   },
 
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "rgba(255,255,255,0.76)",
-    textAlign: "center",
+    color: "rgba(219, 238, 255, 0.72)",
+
+    fontSize: 14,
     fontWeight: "600",
-    marginBottom: 22,
+
+    textAlign: "center",
+
+    lineHeight: 20,
+
+    marginTop: 7,
+
+    paddingHorizontal: 10,
   },
 
-  featuresRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
+  divider: {
+    width: "72%",
+    height: 1,
+
+    marginTop: 20,
     marginBottom: 20,
   },
 
-  featureCard: {
-    flex: 1,
-    minHeight: 104,
+  // --------------------------------------------------
+  // FEATURE CARDS
+  // --------------------------------------------------
 
-    paddingVertical: 14,
-    paddingHorizontal: 8,
+  featureRow: {
+    width: "100%",
 
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.07)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "stretch",
   },
 
-  featureIcon: {
-    fontSize: 22,
-    color: "#8ecbff",
-    marginBottom: 8,
-    fontWeight: "900",
+  featureCard: {
+    width: "31.5%",
+
+    minHeight: 125,
+
+    alignItems: "center",
+
+    paddingVertical: 13,
+    paddingHorizontal: 4,
+
+    borderRadius: 17,
+
+    backgroundColor: "rgba(10, 31, 55, 0.72)",
+
+    borderWidth: 1,
+    borderColor: "rgba(83, 169, 255, 0.20)",
+  },
+
+  iconCircle: {
+    width: 46,
+    height: 46,
+
+    borderRadius: 23,
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    marginBottom: 9,
+
+    borderWidth: 1,
+    borderColor: "rgba(111, 190, 255, 0.22)",
   },
 
   featureTitle: {
-    fontSize: 15,
     color: "#ffffff",
-    fontWeight: "900",
-    marginBottom: 5,
+
+    fontSize: 13,
+    fontWeight: "800",
+
+    marginBottom: 4,
+
     textAlign: "center",
   },
 
   featureText: {
-    fontSize: 13,
-    lineHeight: 15,
-    color: "rgba(255,255,255,0.68)",
-    fontWeight: "700",
+    color: "rgba(204, 228, 249, 0.62)",
+
+    fontSize: 10.5,
+    fontWeight: "600",
+
+    lineHeight: 14,
+
     textAlign: "center",
   },
 
-  hint: {
+  // --------------------------------------------------
+  // CONNECT HINT
+  // --------------------------------------------------
+
+  connectHint: {
+    width: "100%",
+
+    flexDirection: "row",
+    alignItems: "center",
+
+    marginTop: 20,
+
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+
+    borderRadius: 16,
+
+    backgroundColor: "rgba(36, 107, 174, 0.15)",
+
+    borderWidth: 1,
+    borderColor: "rgba(83, 169, 255, 0.22)",
+  },
+
+  connectHintIcon: {
+    width: 38,
+    height: 38,
+
+    borderRadius: 19,
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    backgroundColor: "rgba(72, 165, 255, 0.12)",
+
+    marginRight: 11,
+  },
+
+  connectHintTextArea: {
+    flex: 1,
+  },
+
+  connectHintTitle: {
+    color: "#ffffff",
+
     fontSize: 13,
-    lineHeight: 18,
-    color: "#b2d9ff",
-    textAlign: "center",
     fontWeight: "800",
+  },
+
+  connectHintText: {
+    color: "rgba(204, 228, 249, 0.62)",
+
+    fontSize: 11,
+    fontWeight: "600",
+
+    marginTop: 2,
+  },
+  mainCardTouchable: {
+    width: "100%",
+    maxWidth: 520,
+    borderRadius: 29,
   },
 });
 

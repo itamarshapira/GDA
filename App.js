@@ -33,10 +33,10 @@ if (showAnimatedSplash) {
   return (
     <>
       <StatusBar
-        translucent={false}
-        backgroundColor="#061E38"
-        barStyle="light-content"
-      />
+  translucent={false}
+  backgroundColor="#061E38"
+  barStyle="light-content"
+/>
       <AnimatedSplash onFinish={() => setShowAnimatedSplash(false)} />
     </>
   );
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     //backgroundColor: "#2d2d2dff",
-    backgroundColor: "#082849e3", // #082849e3 option
+    backgroundColor: "#061E38", // #082849e3 option
     elevation: 4,                // shadow for Android
     shadowColor: "#000",         // shadow for iOS
     shadowOpacity: 0.1,

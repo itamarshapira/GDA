@@ -141,6 +141,29 @@ const Environmental = ({ device }) => {
       return;
     }
 
+    // Auto-start methane notifications immediately
+    console.log("[Environmental] ▶️ Auto-starting LIVE methane notify");
+
+    methaneSubRef.current = monitorMethaneNotifications(device, (value) => {
+      console.log("[Environmental] 🔔 AUTO LIVE methane:", value);
+      setMethane(value);
+    });
+
+    setNotifyMethane(true);
+
+    // Auto-start temperature notifications immediately
+    console.log("[Environmental] ▶️ Auto-starting LIVE temperature notify");
+
+    temperatureSubRef.current = monitorTemperatureNotifications(
+      device,
+      (value) => {
+        console.log("[Environmental] 🔔 AUTO LIVE temperature:", value);
+        setTemperature(value);
+      },
+    );
+
+    setNotifyTemperature(true);
+
     const fetchData = async () => {
       try {
         console.log("[Environmental] Reading methane + temperature…");
@@ -152,7 +175,23 @@ const Environmental = ({ device }) => {
         if (tempValue !== null) setTemperature(tempValue);
 
         const intervalValue = await readMeasurementInterval(device);
-        if (intervalValue !== null) setInterval(intervalValue);
+
+        if (intervalValue !== 1) {
+          console.log(
+            "[Environmental] Setting default measurement interval to 1s",
+          );
+
+          const ok = await writeMeasurementInterval(device, 1);
+
+          if (ok) {
+            setInterval(1);
+          } else if (intervalValue !== null) {
+            // If write failed, show the real value from the detector
+            setInterval(intervalValue);
+          }
+        } else {
+          setInterval(1);
+        }
 
         if (methaneValue === null && tempValue === null) {
           setError("Failed to read Environmental Sensing");
@@ -167,11 +206,16 @@ const Environmental = ({ device }) => {
 
     // Cleanup — DO NOT REMOVE subscription here
     return () => {
-      console.log("[Environmental] cleanup: removing methane subscription");
+      // This cleanup runs when the component unmounts or device changes.
+      console.log("[Environmental] cleanup: removing BLE subscriptions");
 
       if (methaneSubRef.current) {
         methaneSubRef.current.remove();
         methaneSubRef.current = null;
+      }
+      if (temperatureSubRef.current) {
+        temperatureSubRef.current.remove();
+        temperatureSubRef.current = null;
       }
     };
   }, [device]);
@@ -265,32 +309,32 @@ const Environmental = ({ device }) => {
         ) : (
           <Text style={styles.text}>Reading temperature…</Text>
         )}
-      </ScrollView>
-      {/* 🔘 STANDALONE INTERVAL BUTTONS (OUTSIDE ScrollView) */}
-      {interval !== null && (
-        <View style={styles.intervalContainer}>
-          <Text style={styles.text}>Set Measurement Interval:</Text>
+        {/* 🔘 STANDALONE INTERVAL BUTTONS (OUTSIDE ScrollView) */}
+        {interval !== null && (
+          <View style={styles.intervalContainer}>
+            <Text style={styles.text}>Set Measurement Interval:</Text>
 
-          <View style={styles.buttonRow}>
-            {[1, 3, 5, 10].map((sec) => (
-              <TouchableOpacity
-                key={sec}
-                onPress={() => handleSetInterval(sec)}
-                activeOpacity={0.6}
-              >
-                <View
-                  style={[
-                    styles.intervalButton,
-                    interval === sec && styles.intervalActive,
-                  ]}
+            <View style={styles.buttonRow}>
+              {[1, 3, 5, 10].map((sec) => (
+                <TouchableOpacity
+                  key={sec}
+                  onPress={() => handleSetInterval(sec)}
+                  activeOpacity={0.6}
                 >
-                  <Text style={styles.intervalButtonText}>{sec}s</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+                  <View
+                    style={[
+                      styles.intervalButton,
+                      interval === sec && styles.intervalActive,
+                    ]}
+                  >
+                    <Text style={styles.intervalButtonText}>{sec}s</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
-      )}
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -383,6 +427,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(66, 153, 225, 0.25)",
   },
+
+  intervalTitle: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "800",
+  },
+
+  intervalSubtitle: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 3,
+  },
+
   // Compact sensor row.
   // Why:
   // - Keeps the row as a dashboard strip.
