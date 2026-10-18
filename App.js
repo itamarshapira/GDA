@@ -57,7 +57,7 @@ if (showAnimatedSplash) {
         // Temporary verification before we add SourceTabs.
         console.log(" App js: Connected device type received by App.js:", type);
         }}
-        onBleDisconnected={() => {
+        onBleDisconnected={() => { 
               console.log(
                 "App.js: Returning to Home screen:",
                 new Date().toISOString(),

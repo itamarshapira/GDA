@@ -32,6 +32,7 @@ const Footer = () => {
 
         <Text style={styles.year}>© 2026</Text>
       </View>
+      <Text style={styles.versionText}>Version 1.1.0</Text>
     </LinearGradient>
   );
 };
@@ -86,6 +87,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
 
     letterSpacing: 0.3,
+  },
+
+  versionText: {
+    color: "rgba(204, 228, 249, 0.5)",
+    fontSize: 11,
+    textAlign: "center",
+    marginTop: 4,
   },
 });
 

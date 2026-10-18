@@ -707,6 +707,14 @@ const Navbar = (props) => {
 
                           const connected = await connectToSelectedDevice(item);
 
+                          // Check if BLE connection actually succeeded
+                          if (!connected) {
+                            console.log("[Navbar] BLE connection failed");
+                            setConnectionPhase(null);
+                            showErrorToast();
+                            return;
+                          }
+
                           // Save the connected BLE device locally inside Navbar.
                           setConnectedDevice(connected);
 

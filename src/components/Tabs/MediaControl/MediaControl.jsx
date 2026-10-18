@@ -267,16 +267,13 @@ const MediaControl = ({ device, onResolutionChanged }) => {
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.header}>Device Control</Text>
-
       {error && <Text style={styles.error}>{error}</Text>}
-
       {/* Current device mode strip */}
       <View style={styles.statusStrip}>
         <Text style={styles.statusText}>
           Current State: <Text style={styles.stateValue}>{stateLabel}</Text>
         </Text>
       </View>
-
       {/* Main control buttons */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Control Mode</Text>
@@ -307,7 +304,6 @@ const MediaControl = ({ device, onResolutionChanged }) => {
           </TouchableOpacity>
         </View>
       </View>
-
       {/* Zoom / resolution control */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Camera Zoom</Text>
@@ -340,73 +336,76 @@ const MediaControl = ({ device, onResolutionChanged }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {/* Axis / G-force section */}{" "}
+      {/* --> currently with false to shut it down. --> AVI. mybe put him under maintenance */}
+      {false && (
+        <View style={styles.section}>
+          <View style={styles.axisHeader}>
+            <Text style={styles.sectionTitle}>G-Force Axis</Text>
 
-      {/* Axis / G-force section */}
-      <View style={styles.section}>
-        <View style={styles.axisHeader}>
-          <Text style={styles.sectionTitle}>G-Force Axis</Text>
-
-          <TouchableOpacity onPress={toggleAxisNotify} activeOpacity={0.2}>
-            <MaterialIcons
-              name={notifyAxis ? "notifications" : "notifications-off"}
-              size={30}
-              color={notifyAxis ? "#04de71ff" : "#8f9aaa"}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {axis ? (
-          <>
-            {/* Compact axis row */}
-            <View style={styles.axisGrid}>
-              <View style={styles.axisBox}>
-                <Text style={styles.axisLabel}>X</Text>
-                <Text style={styles.axisValue}>{axis.gx?.toFixed(3)}g</Text>
-              </View>
-
-              <View style={styles.axisBox}>
-                <Text style={styles.axisLabel}>Y</Text>
-                <Text style={styles.axisValue}>{axis.gy?.toFixed(3)}g</Text>
-              </View>
-
-              <View style={styles.axisBox}>
-                <Text style={styles.axisLabel}>Z</Text>
-                <Text style={styles.axisValue}>{axis.gz?.toFixed(3)}g</Text>
-              </View>
-            </View>
-
-            <Text style={styles.axisHint}>
-              Magnitude:{" "}
-              <Text style={styles.stateValue}>
-                {magnitude !== null ? magnitude.toFixed(3) : "—"}g
-              </Text>
-              {axis.orientationHint ? `  •  ${axis.orientationHint}` : ""}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.emptyText}>Reading axis data…</Text>
-        )}
-
-        {detectorAngle && (
-          <View style={styles.angleCard}>
-            <Text style={styles.angleTitle}>Detector Angle</Text>
-
-            <View style={styles.angleRow}>
-              <Text style={styles.angleLabel}>Roll</Text>
-              <Text style={styles.angleValue}>
-                {detectorAngle.roll.toFixed(1)}°
-              </Text>
-            </View>
-
-            <View style={styles.angleRow}>
-              <Text style={styles.angleLabel}>Pitch</Text>
-              <Text style={styles.angleValue}>
-                {detectorAngle.pitch.toFixed(1)}°
-              </Text>
-            </View>
+            <TouchableOpacity onPress={toggleAxisNotify} activeOpacity={0.2}>
+              <MaterialIcons
+                name={notifyAxis ? "notifications" : "notifications-off"}
+                size={30}
+                color={notifyAxis ? "#04de71ff" : "#8f9aaa"}
+              />
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
+
+          {axis ? (
+            <>
+              {/* Compact axis row */}
+              <View style={styles.axisGrid}>
+                <View style={styles.axisBox}>
+                  <Text style={styles.axisLabel}>X</Text>
+                  <Text style={styles.axisValue}>{axis.gx?.toFixed(3)}g</Text>
+                </View>
+
+                <View style={styles.axisBox}>
+                  <Text style={styles.axisLabel}>Y</Text>
+                  <Text style={styles.axisValue}>{axis.gy?.toFixed(3)}g</Text>
+                </View>
+
+                <View style={styles.axisBox}>
+                  <Text style={styles.axisLabel}>Z</Text>
+                  <Text style={styles.axisValue}>{axis.gz?.toFixed(3)}g</Text>
+                </View>
+              </View>
+
+              <Text style={styles.axisHint}>
+                Magnitude:{" "}
+                <Text style={styles.stateValue}>
+                  {magnitude !== null ? magnitude.toFixed(3) : "—"}g
+                </Text>
+                {axis.orientationHint ? `  •  ${axis.orientationHint}` : ""}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Reading axis data…</Text>
+          )}
+
+          {detectorAngle && (
+            <View style={styles.angleCard}>
+              <Text style={styles.angleTitle}>Detector Angle</Text>
+
+              <View style={styles.angleRow}>
+                <Text style={styles.angleLabel}>Roll</Text>
+                <Text style={styles.angleValue}>
+                  {detectorAngle.roll.toFixed(1)}°
+                </Text>
+              </View>
+
+              <View style={styles.angleRow}>
+                <Text style={styles.angleLabel}>Pitch</Text>
+                <Text style={styles.angleValue}>
+                  {detectorAngle.pitch.toFixed(1)}°
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      )}{" "}
+      {/* End of axis section */}
     </ScrollView>
   );
 };

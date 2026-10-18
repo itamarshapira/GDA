@@ -128,14 +128,14 @@ const Login1 = ({ device, onLogin }) => {
               end={{ x: 1, y: 1 }}
               style={styles.card}
             >
-              <LinearGradient
+              {/* <LinearGradient               // FGD LOGO BADGE cuurently removed
                 colors={["#35a7ff", "#347cff", "#5c6cff"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.productBadge}
               >
                 <Text style={styles.productBadgeText}>FGD MOBILE</Text>
-              </LinearGradient>
+              </LinearGradient> */}
 
               <LinearGradient
                 colors={["rgba(62,161,255,0.24)", "rgba(38,91,151,0.11)"]}

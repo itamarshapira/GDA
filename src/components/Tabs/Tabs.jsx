@@ -17,7 +17,7 @@ import VideoStream from "../Video/VideoStream";
 import AlertBanner from "../AlertBanner/AlertBanner";
 import { LinearGradient } from "expo-linear-gradient";
 const Tabs = ({ device }) => {
-  const [selectedTab, setSelectedTab] = useState("mediaControl"); // Default tab when the dashboard opens.
+  const [selectedTab, setSelectedTab] = useState("deviceInfo"); // Default tab when the dashboard opens.
 
   // This key is used to tell VideoStream to refresh/remount.
   // When resolution changes, we increment this value.
@@ -80,16 +80,14 @@ const Tabs = ({ device }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabMenu}
         >
-          {TabButton("mediaControl", "Device Control")}
           {TabButton("deviceInfo", "Device Info")}
+          {TabButton("mediaControl", "Device Control")}
           {TabButton("environmental", "Measurement")}{" "}
           {/*name cahnge from Environmental to Measurement */}
           {TabButton("settings", "Settings")}
           {TabButton("alert", "Alert Notification")}
           {TabButton("generic", "Generic Access")}
-          {TabButton("battery", "Battery")}
-          {TabButton("logs", "Logs")}
-          {TabButton("upgrade", "Firmware")}
+          {TabButton("maintenance", "Maintenance")}
         </ScrollView>
 
         {/* Tab scrren chosen */}
@@ -135,14 +133,8 @@ const Tabs = ({ device }) => {
             />
           )}
 
-          {selectedTab === "battery" && (
-            <Text style={styles.fakeText}>Battery Coming Soon </Text>
-          )}
-          {selectedTab === "logs" && (
-            <Text style={styles.fakeText}>Logs Coming Soon!!!!!!!</Text>
-          )}
-          {selectedTab === "upgrade" && (
-            <Text style={styles.fakeText}>Firmware Update Coming Soon</Text>
+          {selectedTab === "maintenance" && (
+            <Text style={styles.fakeText}>Maintenance Under Development </Text>
           )}
         </View>
       </View>
