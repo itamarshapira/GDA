@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import { View, Text, StyleSheet, StatusBar, Platform } from "react-native";
 import Navbar from "./src/components/Navbar/Navbar";
@@ -26,6 +26,18 @@ export default function App() {
   
   const [deviceType, setDeviceType] = useState(null); // Stores whether the selected BLE device is a detector or source.
 
+  // Welcome and Navbar are siblings, so App forwards the card's request to Navbar.
+  // The ref exposes only a connect action; BLE permissions, scanning, and the picker
+  // remain owned by Navbar. React clears the handle if Navbar unmounts.
+  const navbarRef = useRef(null);
+
+  const handleWelcomeConnect = () => {
+    // Welcome must never act as a disconnect button. Navbar also checks its current
+    // device ref, covering taps received before App's connection state re-renders.
+    if (isConnected || connectedDevice) return;
+    return navbarRef.current?.startConnection();
+  };
+
 
   // Show the custom animated intro first.
 // After AnimatedSplash finishes, it calls onFinish and the normal app appears.
@@ -49,6 +61,7 @@ if (showAnimatedSplash) {
         barStyle="light-content" // light icons/text on top of blue
       />
       <Navbar
+        ref={navbarRef}
         onBleConnected={(device, type) => {
         setConnectedDevice(device); // Store the connected BLE device
         setDeviceType(type); // Store the detected device type (detector or source)
@@ -88,7 +101,7 @@ if (showAnimatedSplash) {
         <View style={{ flex: 1 }}>
   {/* Centered Welcome */}
   <View style={{ flex: 1, justifyContent: "center" }}>
-    <Welcome />
+    <Welcome onConnect={handleWelcomeConnect} />
   </View >
 
   {/* Footer at the very bottom */}

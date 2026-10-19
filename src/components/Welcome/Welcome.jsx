@@ -1,13 +1,21 @@
 // src/components/Welcome/Welcome.jsx
 
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import styles from "./WelcomeStyles";
 
-const Welcome = () => {
+// The parent App provides the existing Navbar BLE connection action.
+// Welcome only requests a connection; no BLE logic belongs in this screen.
+const Welcome = ({ onConnect }) => {
   return (
     <LinearGradient
       // Brighter background than before, closer to the splash/logo feeling.
@@ -27,7 +35,10 @@ const Welcome = () => {
         -------------------------------------------------- */}
         <TouchableOpacity
           activeOpacity={0.82}
-          onPress={() => {}}
+          onPress={onConnect}
+          accessibilityRole="button"
+          accessibilityLabel="Connect Device"
+          accessibilityHint="Scan for a nearby Detector or Source"
           style={styles.mainCardTouchable}
         >
           <LinearGradient
@@ -146,25 +157,42 @@ const Welcome = () => {
               </View>
 
               {/* --------------------------------------------------
-                CONNECTION INSTRUCTION
-            -------------------------------------------------- */}
-              <View style={styles.connectHint}>
-                <View style={styles.connectHintIcon}>
+                  PRIMARY CONNECT ACTION (CTA)
+                  The entire Welcome card is already touchable.
+                  This is visual guidance, not a second nested button.
+                  The existing onConnect callback still runs BLE via Navbar.
+              -------------------------------------------------- */}
+              <LinearGradient
+                colors={["#2084eb", "#286bd6", "#444fbd"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.connectHint, ctaStyles.container]}
+              >
+                <View style={[styles.connectHintIcon, ctaStyles.iconContainer]}>
                   <MaterialCommunityIcons
-                    name="bluetooth"
-                    size={19}
-                    color="#9dd5ff"
+                    name="bluetooth-connect"
+                    size={24}
+                    color="#ffffff"
                   />
                 </View>
 
                 <View style={styles.connectHintTextArea}>
-                  <Text style={styles.connectHintTitle}>Ready to connect</Text>
-
-                  <Text style={styles.connectHintText}>
-                    Tap the Bluetooth icon above to begin
+                  <Text style={[styles.connectHintTitle, ctaStyles.title]}>
+                    Connect Device
+                  </Text>
+                  <Text style={[styles.connectHintText, ctaStyles.subtitle]}>
+                    Tap to scan for Detector or Source
                   </Text>
                 </View>
-              </View>
+
+                <View style={ctaStyles.arrowContainer}>
+                  <MaterialCommunityIcons
+                    name="arrow-right"
+                    size={20}
+                    color="#ffffff"
+                  />
+                </View>
+              </LinearGradient>
             </LinearGradient>
           </LinearGradient>
         </TouchableOpacity>
@@ -172,5 +200,53 @@ const Welcome = () => {
     </LinearGradient>
   );
 };
+
+// --------------------------------------------------
+// WELCOME CONNECT CTA - LOCAL STYLE OVERRIDES
+// --------------------------------------------------
+// Only the new action banner is styled here so this update needs
+// ONE file. All existing WelcomeStyles.js rules remain unchanged.
+const ctaStyles = StyleSheet.create({
+  container: {
+    marginTop: 22,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
+    borderRadius: 17,
+    borderColor: "rgba(171, 218, 255, 0.50)",
+    shadowColor: "#328dff",
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderColor: "rgba(255,255,255,0.22)",
+    marginRight: 12,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  subtitle: {
+    color: "rgba(240,247,255,0.92)",
+    fontSize: 11.5,
+    lineHeight: 16,
+    marginTop: 3,
+  },
+  arrowContainer: {
+    width: 30,
+    height: 30,
+    marginLeft: 8,
+    borderRadius: 15,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
 
 export default Welcome;

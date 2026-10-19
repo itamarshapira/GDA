@@ -1,6 +1,12 @@
 // src/components/Navbar/Navbar.js
 
-import React, { useRef, useState, useEffect } from "react";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -50,12 +56,18 @@ const getDeviceTypeFromName = (deviceName = "") => {
   return null;
 };
 
-const Navbar = (props) => {
+const Navbar = forwardRef((props, ref) => {
   // props.onBleConnected, props.onBleDisconnected from App.js to inform connection state of BLE
   const [isBluetoothOn, setIsBluetoothOn] = useState(false); // Bluetooth icon state
   const [connectedDevice, setConnectedDevice] = useState(null); // Connected device state
   const [foundDevices, setFoundDevices] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
+
+  // State drives the UI; these refs also change immediately inside event handlers.
+  // They protect against queued taps before React renders a connected device or
+  // closes the picker, including a Welcome callback from the previous render.
+  const connectedDeviceRef = useRef(null);
+  const devicePickerOpenRef = useRef(false);
 
   // ✅ NEW STATE: show loading banner while scanning/connecting
   // This gives user feedback (10 sec wait sometimes)
@@ -216,6 +228,7 @@ const Navbar = (props) => {
           disconnectSubscriptionRef.current = null;
           monitoredDeviceRef.current = null;
           disconnectMonitorGenerationRef.current += 1;
+          connectedDeviceRef.current = null;
           setConnectedDevice(null);
           setIsBluetoothOn(false);
           setConnectionPhase(null);
@@ -338,16 +351,25 @@ const Navbar = (props) => {
   }, []);
   // *hide the BLE hint and clear any existing timers end
 
-  // Handle Bluetooth icon press
-  const handleBluetoothPress = async () => {
+  // Shared entry point: Navbar may connect/disconnect; Welcome passes connectOnly.
+  // Keeping this workflow here means both buttons reuse permissions, scan retries,
+  // status messages, and the same device picker without duplicating BLE logic.
+  const handleBluetoothPress = async ({ connectOnly = false } = {}) => {
+    // Never let an old Welcome tap toggle an already-established connection.
+    if (connectOnly && connectedDeviceRef.current) return;
+
     hideBleHint(); // Hide the hint if the user presses the button
     // State updates are asynchronous, so use a ref to block a second press immediately.
-    // This prevents overlapping scans while Bluetooth state/permissions are checked.
-    if (bleActionInProgressRef.current) return;
+    // This covers permissions, scanning, connecting, and manual disconnect. An open
+    // picker also blocks a new scan while the user is deciding which device to use.
+    if (bleActionInProgressRef.current || devicePickerOpenRef.current) return;
 
     bleActionInProgressRef.current = true;
     setConnectionPhase("preparing");
-    console.log("🟦 Bluetooth icon clicked! (Navbar)");
+    console.log(
+      "Navbar.jsx: BLE action requested:",
+      connectOnly ? "Welcome connect" : "Navbar button",
+    );
 
     try {
       // 1) Check if Bluetooth is ON before scanning/connecting.
@@ -361,16 +383,22 @@ const Navbar = (props) => {
       }
 
       // 2) If already connected, pressing the BLE icon means disconnect.
-      if (connectedDevice) {
+      // Read the current ref after the Bluetooth-state await, rather than relying
+      // on the device captured when this handler's render was created.
+      const deviceToDisconnect = connectedDeviceRef.current;
+      if (deviceToDisconnect) {
+        if (connectOnly) return; // Welcome is never allowed into this branch.
+
         setConnectionPhase("disconnecting");
         intentionalDisconnectRef.current = true;
 
-        const success = await disconnectDevice(connectedDevice);
+        const success = await disconnectDevice(deviceToDisconnect);
 
         if (success) {
           monitoredDeviceRef.current = null;
           disconnectMonitorGenerationRef.current += 1;
           intentionalDisconnectRef.current = false;
+          connectedDeviceRef.current = null;
           setConnectedDevice(null);
           setIsBluetoothOn(false);
           props.onBleDisconnected(); // Tell App.js we are disconnected
@@ -424,6 +452,7 @@ const Navbar = (props) => {
       }
 
       // Open picker only if devices were found.
+      devicePickerOpenRef.current = true;
       setShowPicker(true);
     } catch (error) {
       console.log("❌ Scan failed:", error.message);
@@ -434,6 +463,22 @@ const Navbar = (props) => {
       bleActionInProgressRef.current = false;
       setConnectionPhase(null);
     }
+  };
+
+  // App can request a connection but cannot invoke Navbar's disconnect toggle.
+  // Refresh the handle each render (no dependency array) so it uses current props
+  // and handlers. This hook adds no BLE listener; React clears the ref on unmount.
+  useImperativeHandle(ref, () => ({
+    startConnection: () => handleBluetoothPress({ connectOnly: true }),
+  }));
+
+  // Cancel only the selection step. No device has been selected yet, so closing
+  // the picker leaves App on Welcome and permits another connection attempt.
+  // Ignore a late Cancel/Android Back event once a connection is in progress.
+  const handleCancelPicker = () => {
+    if (bleActionInProgressRef.current || !devicePickerOpenRef.current) return;
+    devicePickerOpenRef.current = false;
+    setShowPicker(false);
   };
 
   return (
@@ -575,7 +620,7 @@ const Navbar = (props) => {
 
       {/* Bluetooth action button — intentionally kept clean, with no circle */}
       <TouchableOpacity
-        onPress={handleBluetoothPress}
+        onPress={() => handleBluetoothPress()}
         disabled={!!connectionPhase}
         style={{ opacity: connectionPhase ? 0.5 : 1 }}
         activeOpacity={0.2}
@@ -626,7 +671,12 @@ const Navbar = (props) => {
       )}
 
       {/* Device picker */}
-      <Modal transparent visible={showPicker} animationType="fade">
+      <Modal
+        transparent
+        visible={showPicker}
+        animationType="fade"
+        onRequestClose={handleCancelPicker}
+      >
         <View style={styles.modalOverlay}>
           <LinearGradient
             colors={[
@@ -696,6 +746,19 @@ const Navbar = (props) => {
                       style={styles.deviceRow}
                       activeOpacity={0.65}
                       onPress={async () => {
+                        // Lock before the first await: two row taps, or a Welcome
+                        // tap while connecting, must not start another BLE operation.
+                        // Ignore row taps after the picker closes or a device connects.
+                        if (
+                          bleActionInProgressRef.current ||
+                          !devicePickerOpenRef.current ||
+                          connectedDeviceRef.current
+                        ) {
+                          return;
+                        }
+
+                        bleActionInProgressRef.current = true;
+                        devicePickerOpenRef.current = false;
                         try {
                           // Close the BLE device picker after the user selects a device.
                           setShowPicker(false);
@@ -710,12 +773,14 @@ const Navbar = (props) => {
                           // Check if BLE connection actually succeeded
                           if (!connected) {
                             console.log("[Navbar] BLE connection failed");
-                            setConnectionPhase(null);
                             showErrorToast();
                             return;
                           }
 
                           // Save the connected BLE device locally inside Navbar.
+                          // Set the ref first so queued Welcome taps cannot disconnect
+                          // this device before Navbar/App finish updating their state.
+                          connectedDeviceRef.current = connected;
                           setConnectedDevice(connected);
 
                           // Change the BLE icon to its connected state.
@@ -723,17 +788,17 @@ const Navbar = (props) => {
 
                           // Send both the connected BLE device and its detected type to App.js.
                           props.onBleConnected(connected, deviceType);
-
-                          // Hide the connection banner after successful connection.
-                          setConnectionPhase(null);
                         } catch (e) {
                           console.log("❌ Selected connect failed:", e.message);
 
-                          // Hide the connection banner if connection failed.
-                          setConnectionPhase(null);
-
                           // Show the connection error notification.
                           showErrorToast();
+                        } finally {
+                          // Hide the connection banner and unlock after success OR
+                          // failure (including a null result). Failures never call
+                          // onBleConnected, so Welcome remains available for retry.
+                          bleActionInProgressRef.current = false;
+                          setConnectionPhase(null);
                         }
                       }}
                     >
@@ -755,7 +820,7 @@ const Navbar = (props) => {
               <TouchableOpacity
                 style={styles.cancelButton}
                 activeOpacity={0.65}
-                onPress={() => setShowPicker(false)}
+                onPress={handleCancelPicker}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -765,6 +830,6 @@ const Navbar = (props) => {
       </Modal>
     </LinearGradient>
   );
-};
+});
 
 export default Navbar;
