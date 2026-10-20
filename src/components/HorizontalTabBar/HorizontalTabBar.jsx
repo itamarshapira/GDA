@@ -8,6 +8,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 const EDGE_TOLERANCE = 2;
 
 const HorizontalTabBar = ({ children, contentContainerStyle }) => {
+  // The parent TabBar provides the tab labels and their touchable areas. This
   const scrollViewRef = useRef(null);
   const measurementsRef = useRef({
     viewportWidth: 0,
