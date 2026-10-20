@@ -6,7 +6,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -17,6 +16,7 @@ import SourceEnvironmental from "./SourceEnvironmental/SourceEnvironmental"; // 
 import SourceAlertNotification from "./SourceAlertNotification/SourceAlertNotification"; // New component for Source alert notification
 import SourceMediaControl from "./SourceMediaControl/SourceMediaControl"; // New component for Source media control
 import SourceSettings from "./SourceSettings/SourceSettings";
+import HorizontalTabBar from "../HorizontalTabBar/HorizontalTabBar";
 
 const SourceTabs = ({ device }) => {
   // Device Information is currently the first and only Source tab.
@@ -81,18 +81,15 @@ const SourceTabs = ({ device }) => {
 
       {/* Bottom half — same structure as Detector Tabs. */}
       <View style={styles.bottomContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabMenu}
-        >
+        {/* Use the same measured scroll indicators as the Detector dashboard. */}
+        <HorizontalTabBar contentContainerStyle={styles.tabMenu}>
           {TabButton("deviceInfo", "Source Info")}
           {TabButton("mediaControl", "Source Control")}
           {TabButton("settings", "Settings")}
           {TabButton("environmental", "Env Sensing")}
           {TabButton("alert", "Alert Notification")}
           {TabButton("genericAccess", "Generic Access")}
-        </ScrollView>
+        </HorizontalTabBar>
 
         {/* Selected tab content. */}
         <View style={styles.screenArea}>

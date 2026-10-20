@@ -1,11 +1,10 @@
 // src/components/Tabs/Tabs.jsx
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from "react-native";
 import DeviceInfo from "./DeviceInfo/DeviceInfo";
 import GenericAccess from "./GenericAccess/GenericAccess";
@@ -15,13 +14,127 @@ import MediaControl from "./MediaControl/MediaControl";
 import AlertNotification from "./AlertNotification/AlertNotification";
 import VideoStream from "../Video/VideoStream";
 import AlertBanner from "../AlertBanner/AlertBanner";
+import HorizontalTabBar from "../HorizontalTabBar/HorizontalTabBar";
 import { LinearGradient } from "expo-linear-gradient";
+import { writeResolutionControl } from "../../services/mediaControlService";
+
+// Keep the existing camera settling window. It is a refresh delay, not an
+// acknowledgment that the MCU/Raspberry Pi has finished applying the new FoV.
+const RESOLUTION_REFRESH_DELAY_MS = 5000;
+
 const Tabs = ({ device }) => {
   const [selectedTab, setSelectedTab] = useState("deviceInfo"); // Default tab when the dashboard opens.
 
   // This key is used to tell VideoStream to refresh/remount.
-  // When resolution changes, we increment this value.
+  // After a successful BLE zoom write and the settling window, increment it.
   const [videoRefreshKey, setVideoRefreshKey] = useState(0);
+
+  // Zoom belongs to the connected dashboard, rather than the Device Control tab:
+  // that tab unmounts when another tab is selected, but video can remain visible.
+  // 1 preserves the initial Zoom Out highlight. This is an assumption at startup;
+  // subsequent highlights mean "last successful BLE write", not confirmed FoV.
+  const [selectedResolution, setSelectedResolution] = useState(1);
+  const [resolutionBusy, setResolutionBusy] = useState(false);
+  const [resolutionError, setResolutionError] = useState(null);
+  const resolutionSessionRef = useRef(null);
+
+  useLayoutEffect(() => {
+    // A session object lets an awaited write distinguish its original device
+    // from a later connection. Its synchronous pending flag blocks rapid taps
+    // before React has rendered the disabled buttons, including tab remounts.
+    // A layout effect prepares/invalidates the session at commit time, before
+    // the user can press the newly displayed device's buttons.
+    const session = {
+      device,
+      active: true,
+      pending: false,
+      timer: null,
+      finishWait: null,
+    };
+    resolutionSessionRef.current = session;
+    setSelectedResolution(1);
+    setResolutionBusy(false);
+    setResolutionError(null);
+
+    return () => {
+      session.active = false;
+      if (session.timer !== null) {
+        clearTimeout(session.timer);
+        session.timer = null;
+        console.log("Tabs.jsx: Cancelled pending zoom video refresh:", device?.id);
+      }
+      // Release the waiting promise as well as the timer. The handler checks
+      // session.active before updating state or refreshing a later connection.
+      session.finishWait?.();
+      session.finishWait = null;
+    };
+  }, [device]);
+
+  // Sequence one zoom operation: BLE write -> existing delay -> video refresh.
+  // No automatic retry or assumed camera acknowledgment is added. A user may
+  // resend the same value after completion because BLE success is not Pi success.
+  const handleResolutionPress = async (value) => {
+    const session = resolutionSessionRef.current;
+    if (!device || !session?.active || session.device !== device) return;
+    if (session.pending) {
+      console.log("Tabs.jsx: Ignoring zoom press while an operation is pending:", value);
+      return;
+    }
+    if (value !== 0 && value !== 1) return;
+
+    session.pending = true;
+    setResolutionBusy(true);
+    setResolutionError(null);
+    const startedAt = Date.now();
+    const command = {
+      deviceId: device.id,
+      value,
+      startedAt: new Date(startedAt).toISOString(),
+    };
+    console.log("Tabs.jsx: Zoom requested:", command);
+
+    try {
+      const ok = await writeResolutionControl(device, value);
+      if (!session.active) {
+        console.log("Tabs.jsx: Ignoring zoom result from a closed session:", command);
+        return;
+      }
+      if (!ok) {
+        // Preserve the previous highlight and do not refresh after a failed write.
+        setResolutionError("Failed to write Resolution");
+        return;
+      }
+
+      // Save selected button only after BLE write succeeds. Firmware completion
+      // is unknown: this is requested-state feedback, not camera-state readback.
+      setSelectedResolution(value);
+
+      // Wait before refreshing the video: the RPI needs time to apply FoV changes.
+      // Keep the operation busy through this window so another zoom cannot race
+      // the first command or create another timer. Tabs survives tab switching.
+      await new Promise((resolve) => {
+        session.finishWait = resolve;
+        session.timer = setTimeout(() => {
+          session.timer = null;
+          session.finishWait = null;
+          resolve();
+        }, RESOLUTION_REFRESH_DELAY_MS);
+      });
+      if (!session.active) return;
+
+      console.log("Tabs.jsx: Refreshing video after zoom settling window (FoV unverified):", {
+        ...command,
+        elapsedMs: Date.now() - startedAt,
+      });
+      setVideoRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      console.log("Tabs.jsx: Zoom operation failed:", command, error?.message || error);
+      if (session.active) setResolutionError("Failed to write Resolution");
+    } finally {
+      session.pending = false;
+      if (session.active) setResolutionBusy(false);
+    }
+  };
 
   const TabButton = (id, label) => {
     const isActive = selectedTab === id;
@@ -74,12 +187,8 @@ const Tabs = ({ device }) => {
 
       {/* Bottom Half */}
       <View style={styles.bottomContainer}>
-        {/* TAbs Scrollable! */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabMenu}
-        >
+        {/* Shared scroll indicators; tab selection and button styling stay here. */}
+        <HorizontalTabBar contentContainerStyle={styles.tabMenu}>
           {TabButton("deviceInfo", "Device Info")}
           {TabButton("mediaControl", "Device Control")}
           {TabButton("environmental", "Measurement")}{" "}
@@ -88,7 +197,7 @@ const Tabs = ({ device }) => {
           {TabButton("alert", "Alert Notification")}
           {TabButton("generic", "Generic Access")}
           {TabButton("maintenance", "Maintenance")}
-        </ScrollView>
+        </HorizontalTabBar>
 
         {/* Tab scrren chosen */}
         <View style={styles.screenArea}>
@@ -126,10 +235,10 @@ const Tabs = ({ device }) => {
           {selectedTab === "mediaControl" && (
             <MediaControl
               device={device}
-              onResolutionChanged={() => {
-                console.log("[Tabs] Resolution changed → refreshing video");
-                setVideoRefreshKey((prev) => prev + 1);
-              }}
+              selectedResolution={selectedResolution}
+              resolutionBusy={resolutionBusy}
+              resolutionError={resolutionError}
+              onResolutionPress={handleResolutionPress}
             />
           )}
 

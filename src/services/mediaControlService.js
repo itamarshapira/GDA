@@ -221,23 +221,37 @@ export const monitorAxis = (device, onValue) => {
  * Write video resolution command to the MCU.
  *
  * Values:
- * 0 = LOW  -> RPI maps to FoV 4   -> 640x480
- * 1 = HIGH -> RPI maps to FoV 100 -> Full
+ * 0 = Zoom In  -> RPI maps to FoV 4 (center crop)
+ * 1 = Zoom Out -> RPI maps to FoV 100 (full image)
+ * This selects FoV, not a 640x480 output size. The camera normally outputs
+ * 1280x960. A BLE response does not confirm the Pi helper/reload has completed.
  */
 export async function writeResolutionControl(device, value) {
   if (!device) {
-    console.log("[ResolutionControl] ❌ No device");
+    console.log("mediaControlService.js: Zoom write rejected - no device");
     return false;
   }
 
   if (value !== 0 && value !== 1) {
-    console.log("[ResolutionControl] ❌ Invalid value:", value);
+    console.log("mediaControlService.js: Zoom write rejected - invalid value:", value);
     return false;
   }
 
+  const startedAt = Date.now();
+  const command = {
+    deviceId: device.id,
+    value,
+    expectedFov: value === 0 ? 4 : 100,
+    serviceUUID: MEDIA_CONTROL_UUID,
+    characteristicUUID: RESOLUTION_CONTROL_UUID,
+    timestamp: new Date(startedAt).toISOString(),
+  };
   try {
-    console.log("[ResolutionControl] ✍️ Writing resolution value:", value);
+    console.log("mediaControlService.js: Zoom BLE write started:", command);
 
+    // Preserve the firmware contract: one UInt8 byte, with response, awaited.
+    // No readback/notify completion protocol is defined here; do not infer Pi
+    // success from this BLE result or automatically resend a failed command.
     const ok = await writeUint8Characteristic(
       device,
       MEDIA_CONTROL_UUID,
@@ -245,10 +259,15 @@ export async function writeResolutionControl(device, value) {
       value
     );
 
-    console.log("[ResolutionControl] ✅ Write result:", ok);
+    console.log(
+      ok
+        ? "mediaControlService.js: Zoom BLE write succeeded; Raspberry Pi FoV unverified:"
+        : "mediaControlService.js: Zoom BLE write failed; no automatic retry:",
+      { ...command, elapsedMs: Date.now() - startedAt },
+    );
     return ok;
   } catch (err) {
-    console.log("[ResolutionControl] ❌ Failed to write:", err.message);
+    console.log("mediaControlService.js: Zoom BLE write threw:", command, err.message);
     return false;
   }
 }

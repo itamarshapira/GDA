@@ -15,7 +15,6 @@ import {
   writeMediaControlState,
   readAxisRaw,
   monitorAxis,
-  writeResolutionControl,
 } from "../../../services/mediaControlService";
 
 // Firmware enum.
@@ -26,18 +25,29 @@ const MEDIA_CONTROL_MAP = {
   2: "Zero Calibration",
 };
 
-const MediaControl = ({ device, onResolutionChanged }) => {
+const MediaControl = ({
+  device,
+  selectedResolution,
+  resolutionBusy,
+  resolutionError,
+  onResolutionPress,
+}) => {
   const [state, setState] = useState(null);
   const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [controlBusy, setBusy] = useState(false);
+  const busy = controlBusy || resolutionBusy;
+
+  // React state disables the buttons on the next render. This immediate guard
+  // also prevents rapid mode/zoom presses from starting together before that.
+  const controlActionInProgressRef = useRef(false);
 
   // Axis / G-force data.
   const [axis, setAxis] = useState(null);
   const [notifyAxis, setNotifyAxis] = useState(false);
   const axisSubRef = useRef(null);
 
-  // Selected zoom/resolution button feedback.
-  const [selectedResolution, setSelectedResolution] = useState(1);
+  // Selected zoom feedback and the pending operation live in Tabs, so leaving
+  // this screen does not reset the highlight or lose the pending video refresh.
 
   // -------------------------------------------
   // READ CURRENT MEDIA CONTROL STATE
@@ -100,8 +110,9 @@ const MediaControl = ({ device, onResolutionChanged }) => {
   // ALIGNMENT BUTTON
   // -------------------------------------------
   const handleAlignmentPress = async () => {
-    if (!device || busy) return;
+    if (!device || busy || controlActionInProgressRef.current) return;
 
+    controlActionInProgressRef.current = true;
     setBusy(true);
     setError(null);
 
@@ -116,12 +127,14 @@ const MediaControl = ({ device, onResolutionChanged }) => {
 
     if (!ok) {
       setError("Failed to write Alignment");
+      controlActionInProgressRef.current = false;
       setBusy(false);
       return;
     }
 
     // Re-read actual state from device after writing.
     await refreshState();
+    controlActionInProgressRef.current = false;
     setBusy(false);
   };
 
@@ -129,8 +142,9 @@ const MediaControl = ({ device, onResolutionChanged }) => {
   // ZERO CALIBRATION BUTTON
   // -------------------------------------------
   const handleZeroCalibrationPress = async () => {
-    if (!device || busy) return;
+    if (!device || busy || controlActionInProgressRef.current) return;
 
+    controlActionInProgressRef.current = true;
     setBusy(true);
     setError(null);
 
@@ -140,6 +154,7 @@ const MediaControl = ({ device, onResolutionChanged }) => {
 
     if (!ok) {
       setError("Failed to write Zero Calibration");
+      controlActionInProgressRef.current = false;
       setBusy(false);
       return;
     }
@@ -147,6 +162,7 @@ const MediaControl = ({ device, onResolutionChanged }) => {
     // Hardware may return to Normal later,
     // so we read once after sending the command.
     await refreshState();
+    controlActionInProgressRef.current = false;
     setBusy(false);
   };
 
@@ -154,39 +170,24 @@ const MediaControl = ({ device, onResolutionChanged }) => {
   // ZOOM / RESOLUTION BUTTONS
   // -------------------------------------------
   const handleResolutionPress = async (value) => {
-    if (!device || busy) return;
-
-    setBusy(true);
-    setError(null);
-
-    console.log("[MediaControl] 💾 Resolution pressed →", value);
-
-    const ok = await writeResolutionControl(device, value);
-
-    if (!ok) {
-      setError("Failed to write Resolution");
-      setBusy(false);
+    if (!device) return;
+    if (busy || controlActionInProgressRef.current) {
+      console.log("MediaControl.jsx: Ignoring zoom press while a control operation is pending:", value);
       return;
     }
 
-    // Save selected button only after BLE write succeeds.
-    setSelectedResolution(value);
-
-    // Wait before refreshing the video.
-    // Why:
-    // - The RPI needs time to apply FoV/resolution changes.
-    // - Then Tabs.jsx remounts/refreshes VideoStream.
-    setTimeout(() => {
-      console.log("[MediaControl] ⏱️ Refreshing video after resolution change");
-
-      if (onResolutionChanged) {
-        onResolutionChanged();
-      }
-    }, 5000);
-
-    console.log("[MediaControl] ✅ Resolution write completed:", value);
-
-    setBusy(false);
+    controlActionInProgressRef.current = true;
+    setError(null);
+    try {
+      // Tabs owns the write, selected value, and five-second refresh timer for
+      // the entire connection. Waiting here holds the local guard through that
+      // sequence; the parent guard also protects a newly mounted control tab.
+      await onResolutionPress(value);
+    } finally {
+      // This ref belongs to this component instance. Releasing it is safe even
+      // if the tab has unmounted; no local state updates follow the await.
+      controlActionInProgressRef.current = false;
+    }
   };
 
   // -------------------------------------------
@@ -267,7 +268,9 @@ const MediaControl = ({ device, onResolutionChanged }) => {
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.header}>Device Control</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {(error || resolutionError) && (
+        <Text style={styles.error}>{error || resolutionError}</Text>
+      )}
       {/* Current device mode strip */}
       <View style={styles.statusStrip}>
         <Text style={styles.statusText}>

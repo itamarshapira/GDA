@@ -1,11 +1,10 @@
 /*
   VideoStream.jsx
   App opens VideoStream
-→ WebView loads http://fgcam:admin@10.42.0.1/live_mjpeg.html
-→ WebView gets/authenticates access
-→ onLoadEnd switches to http://10.42.0.1/live_mjpeg.html
-→ page fetches live2.mjpeg
-→ video appears
+→ WebView loads the authentication warm-up URL for /live.html
+→ onLoadEnd switches to the normal /live.html URL
+→ the camera page manages the stream
+Page load events do not confirm authentication, fresh frames, or the applied FoV.
 */
 
 import React, { useEffect, useState } from "react";
@@ -69,7 +68,10 @@ const VideoStream = ({ refreshKey }) => {
     // How: we reuse the same auth warm-up flow as the refresh button.
     if (refreshKey === undefined) return;
 
-    console.log("[VideoStream] refreshKey changed → reload video:", refreshKey);
+    console.log("VideoStream.jsx: Refresh requested; reloading camera page:", {
+      refreshKey,
+      timestamp: new Date().toISOString(),
+    });
 
     setCurrentUrl(AUTH_WARMUP_URL);
     setVideoKey((prev) => prev + 1);
@@ -128,12 +130,25 @@ const VideoStream = ({ refreshKey }) => {
             mixedContentMode="always"
             javaScriptEnabled={true}
             domStorageEnabled={true}
+            // The key/phase and timestamp distinguish a requested refresh from
+            // an actual page navigation. Neither event confirms the camera FoV.
+            onLoadStart={() => {
+              console.log("VideoStream.jsx: Page load started:", {
+                videoKey,
+                phase: currentUrl === AUTH_WARMUP_URL ? "auth warm-up" : "video",
+                timestamp: new Date().toISOString(),
+              });
+            }}
             onLoadEnd={() => {
-              console.log("[WebView] Loaded:", currentUrl);
+              console.log("VideoStream.jsx: Page load ended (FoV unverified):", {
+                videoKey,
+                phase: currentUrl === AUTH_WARMUP_URL ? "auth warm-up" : "video",
+                timestamp: new Date().toISOString(),
+              });
 
               if (currentUrl === AUTH_WARMUP_URL) {
                 console.log(
-                  "[WebView] Auth warm-up finished, switching to normal URL",
+                  "VideoStream.jsx: Warm-up navigation ended, switching to normal URL",
                 );
                 setCurrentUrl(VIDEO_URL);
               }
