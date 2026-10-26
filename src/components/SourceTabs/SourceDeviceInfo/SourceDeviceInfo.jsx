@@ -1,6 +1,6 @@
 // src/components/SourceTabs/SourceDeviceInfo/SourceDeviceInfo.jsx
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   ScrollView,
   Text,
@@ -12,54 +12,14 @@ import {
 import AndroidOpenSettings from "react-native-android-open-settings";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { readSourceDeviceInformation } from "../../../services/sourceDeviceInfoService";
-
-const SourceDeviceInfo = ({ device }) => {
-  const [info, setInfo] = useState(null);
-  const [error, setError] = useState(null);
+// SourceTabs shares its session-owned BLE Info result with this tab and video.
+// Async cancellation/device ownership now live in useDeviceInformation, so a
+// late read cannot update an unmounted tab or a replacement device's header.
+const SourceDeviceInfo = ({ info, error }) => {
 
   const openWifiSettings = () => {
     AndroidOpenSettings.wifiSettings();
   };
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchSourceInfo = async () => {
-      if (!device) {
-        setError("No BLE device");
-        return;
-      }
-
-      setInfo(null);
-      setError(null);
-
-      console.log("SourceDeviceInfo.jsx: Reading Source device information");
-
-      const result = await readSourceDeviceInformation(device);
-
-      if (cancelled) {
-        return;
-      }
-
-      if (result) {
-        console.log(
-          "SourceDeviceInfo.jsx: Source information received:",
-          result,
-        );
-
-        setInfo(result);
-      } else {
-        setError("Failed to read Source information");
-      }
-    };
-
-    fetchSourceInfo();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [device]);
 
   return (
     <ScrollView

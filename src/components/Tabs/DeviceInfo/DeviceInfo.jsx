@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   ScrollView,
   Text,
@@ -11,37 +11,14 @@ import {
 import AndroidOpenSettings from "react-native-android-open-settings";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { readDeviceInformation } from "../../../services/deviceInfoService";
-
-const DeviceInfo = ({ device }) => {
-  const [info, setInfo] = useState(null); // device info state to hold info from BLE
-  const [error, setError] = useState(null);
+// Tabs now owns the BLE Info result and cleanup for the connected session.
+// Returning to this tab reuses that result instead of re-reading all GATT fields.
+const DeviceInfo = ({ info, error }) => {
 
   const openWifiSettings = () => {
     AndroidOpenSettings.wifiSettings();
     // Opens system settings screen (user can tap Wi-Fi)
   };
-
-  useEffect(() => {
-    // on component mount or device change
-    const fetchInfo = async () => {
-      if (!device) {
-        setError("No BLE device");
-        return;
-      }
-
-      console.log("[DeviceInfo]  Reading...");
-      const result = await readDeviceInformation(device);
-      if (result) {
-        console.log("[DeviceInfo]  Success:", result);
-        setInfo(result);
-      } else {
-        setError("Failed to read");
-      }
-    };
-
-    fetchInfo();
-  }, [device]);
 
   return (
     <ScrollView

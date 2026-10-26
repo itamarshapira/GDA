@@ -10,6 +10,9 @@ export async function requestBlePermissions() {
       const permissions = [
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+        // Android 12+ requires coarse and fine in the same runtime request.
+        // Approximate-only access still does not satisfy the existing fine check.
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       ];
 

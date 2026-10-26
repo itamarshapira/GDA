@@ -32,7 +32,7 @@ const Footer = () => {
 
         <Text style={styles.year}>© 2026</Text>
       </View>
-      <Text style={styles.versionText}>Version 1.1.0</Text>
+      <Text style={styles.versionText}>Version 1.2.0</Text>
     </LinearGradient>
   );
 };

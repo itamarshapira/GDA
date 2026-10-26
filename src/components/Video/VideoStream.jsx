@@ -14,7 +14,10 @@ import {
   Text,
   Dimensions,
   TouchableOpacity,
+  Alert,
+  Platform,
 } from "react-native";
+import AndroidOpenSettings from "react-native-android-open-settings";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import DigestFetch from "react-native-digest-fetch";
@@ -27,9 +30,72 @@ const AUTH_WARMUP_URL = "http://fgcam:admin@10.42.0.1/live.html";
 // Second URL: the real page we want to show after auth is accepted.
 const VIDEO_URL = "http://10.42.0.1/live.html";
 
-const VideoStream = ({ refreshKey }) => {
+const VideoStream = ({
+  refreshKey,
+  wifiStatus = { status: "unknown", reason: "checking" },
+}) => {
   const [currentUrl, setCurrentUrl] = useState(AUTH_WARMUP_URL); // WebView first loads the auth warm-up URL.
   const [videoKey, setVideoKey] = useState(0); // Key to force WebView reload when URL changes.
+
+  // The dashboard owns SSID reads/listeners, not the WebView or this header.
+  // A green icon means verified SSID equality only, never video/authentication health.
+  const wifiMatched = wifiStatus.status === "matched";
+  const wifiDisconnected = wifiStatus.status === "disconnected";
+  const wifiLabel = wifiMatched
+    ? "Device Wi-Fi SSID matches"
+    : wifiDisconnected
+      ? "Device Wi-Fi not connected. Open Wi-Fi settings"
+      : "Device Wi-Fi status unknown. Show details";
+
+  const handleWifiPress = () => {
+    if (wifiDisconnected && Platform.OS === "android") {
+      AndroidOpenSettings.wifiSettings(); // Same explicit workflow as Device Info.
+      return;
+    }
+    if (wifiMatched) {
+      Alert.alert(
+        "Device Wi-Fi",
+        "The phone's Wi-Fi SSID matches this device. This does not confirm that the camera stream is working.",
+      );
+      return;
+    }
+
+    // Unknown is intentional: Android can redact SSIDs even while Wi-Fi works.
+    // Only a user's explicit Settings button opens settings; no permission or
+    // Location activation prompts are launched by render, polling, or this icon.
+    let message =
+      "The phone's Wi-Fi network could not be verified yet. Keep Wi-Fi and Location enabled and allow precise location for GDA.";
+    let openSettings = null;
+    if (wifiStatus.reason === "location-disabled") {
+      message =
+        "Android Location is off. Enable it to let GDA read the phone's Wi-Fi SSID. No GPS coordinates are collected.";
+      openSettings = AndroidOpenSettings.locationSourceSettings;
+    } else if (
+      ["precise-location-not-granted", "permission-blocked"].includes(
+        wifiStatus.reason,
+      )
+    ) {
+      message =
+        "Allow precise location for GDA in Android app settings so Android can reveal the phone's Wi-Fi SSID.";
+      openSettings = AndroidOpenSettings.appDetailsSettings;
+    } else if (wifiStatus.reason === "device-ssid-unavailable") {
+      message =
+        "The connected device's expected Wi-Fi SSID is not available from BLE yet. If it remains unavailable, reconnect the device.";
+    } else if (wifiStatus.reason === "checking") {
+      message =
+        "Checking the phone's Wi-Fi network. The icon stays gray until a reliable comparison is available.";
+    }
+    Alert.alert(
+      "Wi-Fi status unknown",
+      message,
+      openSettings && Platform.OS === "android"
+        ? [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: openSettings },
+          ]
+        : [{ text: "OK" }],
+    );
+  };
 
   const refreshVideo = () => {
     // This function can be called to refresh the video stream, re-triggering the auth warm-up process.
@@ -96,21 +162,37 @@ const VideoStream = ({ refreshKey }) => {
       >
         {/* Top row above the video */}
         <View style={styles.cameraHeader}>
-          {/* LIVE badge
-            Why:
-            - Gives the user immediate confidence that this is the live camera area.
-            - Green dot is only visual for now; it does not check stream health yet.
-        */}
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
+          {/* Left side: camera status indicators */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {/* LIVE indicator */}
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+
+            {/* Wi-Fi status — preserves existing connection logic */}
+            <TouchableOpacity
+              style={styles.wifiButton}
+              onPress={handleWifiPress}
+              activeOpacity={0.5}
+              accessibilityRole="button"
+              accessibilityLabel={wifiLabel}
+            >
+              <MaterialCommunityIcons
+                name={wifiDisconnected ? "wifi-off" : "wifi"}
+                size={26}
+                color={
+                  wifiMatched
+                    ? "#0ee50be2"
+                    : wifiDisconnected
+                      ? "#ffffff"
+                      : "#8293a8"
+                }
+              />
+            </TouchableOpacity>
           </View>
 
-          {/* Refresh button
-            Why:
-            - Keeps the existing refreshVideo logic.
-            - Moves the button into the card header instead of floating over the video.
-        */}
+          {/* Right side: camera refresh action */}
           <TouchableOpacity
             style={styles.refreshBtn}
             onPress={refreshVideo}
@@ -135,16 +217,21 @@ const VideoStream = ({ refreshKey }) => {
             onLoadStart={() => {
               console.log("VideoStream.jsx: Page load started:", {
                 videoKey,
-                phase: currentUrl === AUTH_WARMUP_URL ? "auth warm-up" : "video",
+                phase:
+                  currentUrl === AUTH_WARMUP_URL ? "auth warm-up" : "video",
                 timestamp: new Date().toISOString(),
               });
             }}
             onLoadEnd={() => {
-              console.log("VideoStream.jsx: Page load ended (FoV unverified):", {
-                videoKey,
-                phase: currentUrl === AUTH_WARMUP_URL ? "auth warm-up" : "video",
-                timestamp: new Date().toISOString(),
-              });
+              console.log(
+                "VideoStream.jsx: Page load ended (FoV unverified):",
+                {
+                  videoKey,
+                  phase:
+                    currentUrl === AUTH_WARMUP_URL ? "auth warm-up" : "video",
+                  timestamp: new Date().toISOString(),
+                },
+              );
 
               if (currentUrl === AUTH_WARMUP_URL) {
                 console.log(
@@ -189,18 +276,32 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(66, 153, 225, 0.28)",
-    padding: 10,
+    padding: 5,
     overflow: "hidden",
   },
 
   // Header row inside the camera card.
   // Why:
-  // - Places LIVE on the left and refresh on the right.
+  // - Places LIVE on the left and Wi-Fi/refresh on the right.
   cameraHeader: {
-    height: 42,
+    height: 38,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  // Full existing header height, no visible background and no hitSlop that
+  // could overlap the separate refresh button's touch target.
+  wifiButton: {
+    width: 44,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // Small LIVE label.
@@ -251,14 +352,15 @@ const styles = StyleSheet.create({
   // Why:
   // - Cleaner than floating above the video.
   refreshBtn: {
-    width: 34,
-    height: 34,
+    width: 32,
+    height: 32,
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.08)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
+    // marginRight: 8,
   },
 });
 

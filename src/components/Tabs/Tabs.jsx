@@ -17,12 +17,19 @@ import AlertBanner from "../AlertBanner/AlertBanner";
 import HorizontalTabBar from "../HorizontalTabBar/HorizontalTabBar";
 import { LinearGradient } from "expo-linear-gradient";
 import { writeResolutionControl } from "../../services/mediaControlService";
+import { readDeviceInformation } from "../../services/deviceInfoService";
+import useDeviceInformation from "../../hooks/useDeviceInformation";
+import useWifiSsidDiagnostics from "../../hooks/useWifiSsidDiagnostics";
 
 // Keep the existing camera settling window. It is a refresh delay, not an
 // acknowledgment that the MCU/Raspberry Pi has finished applying the new FoV.
 const RESOLUTION_REFRESH_DELAY_MS = 5000;
 
 const Tabs = ({ device }) => {
+  // Session-owned Info read and Wi-Fi monitor survive tab/video remounts. Share
+  // the same BLE result with Info and the header; neither child reads it again.
+  const deviceInformation = useDeviceInformation(device, readDeviceInformation, "Failed to read");
+  const wifiStatus = useWifiSsidDiagnostics(device, deviceInformation.info?.ssid);
   const [selectedTab, setSelectedTab] = useState("deviceInfo"); // Default tab when the dashboard opens.
 
   // This key is used to tell VideoStream to refresh/remount.
@@ -176,7 +183,7 @@ const Tabs = ({ device }) => {
       {/* Top Half */}
       {selectedTab !== "settings" && (
         <View style={styles.videoContainer}>
-          <VideoStream refreshKey={videoRefreshKey} />
+          <VideoStream refreshKey={videoRefreshKey} wifiStatus={wifiStatus} />
         </View>
       )}
 
@@ -201,7 +208,7 @@ const Tabs = ({ device }) => {
 
         {/* Tab scrren chosen */}
         <View style={styles.screenArea}>
-          {selectedTab === "deviceInfo" && <DeviceInfo device={device} />}
+          {selectedTab === "deviceInfo" && <DeviceInfo {...deviceInformation} />}
           <View
             style={{
               flex: 1,

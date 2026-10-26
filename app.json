@@ -2,7 +2,7 @@
   "expo": {
     "name": "GasApp",
     "slug": "GDA",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/fgd_android_icon_1024.png",
     "userInterfaceStyle": "light",
@@ -35,7 +35,9 @@
         "BLUETOOTH_CONNECT",
         "BLUETOOTH_SCAN",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
         "INTERNET",
+        "ACCESS_NETWORK_STATE",
         "ACCESS_WIFI_STATE",
         "CHANGE_WIFI_STATE"
       ],

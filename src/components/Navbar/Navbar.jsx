@@ -29,6 +29,7 @@ import {
   manager,
 } from "../../services/bleService";
 import { requestBlePermissions } from "../../services/androidService";
+import { prepareLocationForConnection } from "../../services/locationSettingsService";
 import { writePasskey } from "../../services/loginService";
 
 //* new label for device type detection
@@ -89,12 +90,12 @@ const Navbar = forwardRef((props, ref) => {
   const disconnectMonitorGenerationRef = useRef(0);
   const onBleDisconnectedRef = useRef(props.onBleDisconnected);
 
-  // Small startup hint that points the user toward the BLE button.
-  const [showBleHint, setShowBleHint] = useState(false);
+  // Small startup hint that points the user toward the BLE button. commented out for now, but can be re-enabled if needed.
+  // const [showBleHint, setShowBleHint] = useState(false);
 
-  const bleHintOpacity = useRef(new Animated.Value(0)).current;
+  // const  bleHintOpacity = useRef(new Animated.Value(0)).current;
 
-  const bleHintTimerRef = useRef(null);
+  // const bleHintTimerRef = useRef(null);
 
   // NEW STATE: To control the visibility of the error message
   const [scanError, setScanError] = useState(false);
@@ -307,48 +308,48 @@ const Navbar = forwardRef((props, ref) => {
   };
 
   // *hide the BLE hint and clear any existing timers start
-  const hideBleHint = () => {
-    // this function hides the BLE hint and clears any existing timers
-    if (bleHintTimerRef.current) {
-      clearTimeout(bleHintTimerRef.current);
-      bleHintTimerRef.current = null;
-    }
+  // const hideBleHint = () => {
+  //   // this function hides the BLE hint and clears any existing timers
+  //   if (bleHintTimerRef.current) {
+  //     clearTimeout(bleHintTimerRef.current);
+  //     bleHintTimerRef.current = null;
+  //   }
 
-    Animated.timing(bleHintOpacity, {
-      toValue: 0,
-      duration: 800, // Fade out over 0.5 seconds
-      useNativeDriver: true,
-    }).start(() => {
-      setShowBleHint(false);
-    });
-  };
+  //   Animated.timing(bleHintOpacity, {
+  //     toValue: 0,
+  //     duration: 800, // Fade out over 0.5 seconds
+  //     useNativeDriver: true,
+  //   }).start(() => {
+  //     setShowBleHint(false);
+  //   });
+  // };
 
-  useEffect(() => {
-    // Show the BLE hint on first render
-    // Wait a little so the screen finishes appearing first.
-    const showTimer = setTimeout(() => {
-      setShowBleHint(true);
+  // useEffect(() => {
+  //   // Show the BLE hint on first render
+  //   // Wait a little so the screen finishes appearing first.
+  //   const showTimer = setTimeout(() => {
+  //     setShowBleHint(true);
 
-      Animated.timing(bleHintOpacity, {
-        toValue: 1, // Fade in to fully visible
-        duration: 350, // Fade in over 0.35 seconds
-        useNativeDriver: true,
-      }).start();
+  //     Animated.timing(bleHintOpacity, {
+  //       toValue: 1, // Fade in to fully visible
+  //       duration: 350, // Fade in over 0.35 seconds
+  //       useNativeDriver: true,
+  //     }).start();
 
-      // Automatically disappear after a few seconds.
-      bleHintTimerRef.current = setTimeout(() => {
-        hideBleHint();
-      }, 8000); // Hide after 8 seconds
-    }, 700); // * Wait 0.7 seconds before showing the hint
+  //     // Automatically disappear after a few seconds.
+  //     bleHintTimerRef.current = setTimeout(() => {
+  //       hideBleHint();
+  //     }, 8000); // Hide after 8 seconds
+  //   }, 700); // * Wait 0.7 seconds before showing the hint
 
-    return () => {
-      clearTimeout(showTimer);
+  //   return () => {
+  //     clearTimeout(showTimer);
 
-      if (bleHintTimerRef.current) {
-        clearTimeout(bleHintTimerRef.current);
-      }
-    };
-  }, []);
+  //     if (bleHintTimerRef.current) {
+  //       clearTimeout(bleHintTimerRef.current);
+  //     }
+  //   };
+  // }, []);
   // *hide the BLE hint and clear any existing timers end
 
   // Shared entry point: Navbar may connect/disconnect; Welcome passes connectOnly.
@@ -358,7 +359,7 @@ const Navbar = forwardRef((props, ref) => {
     // Never let an old Welcome tap toggle an already-established connection.
     if (connectOnly && connectedDeviceRef.current) return;
 
-    hideBleHint(); // Hide the hint if the user presses the button
+    // hideBleHint(); // Hide the hint if the user presses the button comment out for now, but can be re-enabled if needed.
     // State updates are asynchronous, so use a ref to block a second press immediately.
     // This covers permissions, scanning, connecting, and manual disconnect. An open
     // picker also blocks a new scan while the user is deciding which device to use.
@@ -419,7 +420,13 @@ const Navbar = forwardRef((props, ref) => {
 
       console.log("✅ Permissions granted — starting BLE scan...");
 
-      // 4) Search for nearby FG devices.
+      // 4) Best-effort Location activation for both explicit Connect entry points.
+      // The disconnect branch has already returned, and the existing action ref
+      // stays locked through the native dialog. Do this once, outside scan retries.
+      // Declining affects SSID visibility, not permission to continue this BLE flow.
+      await prepareLocationForConnection();
+
+      // 5) Search for nearby FG devices.
       setConnectionPhase("scanning");
       setScanError(false);
 
@@ -582,8 +589,8 @@ const Navbar = forwardRef((props, ref) => {
         </Animated.View>
       )}
 
-      {/* Small startup BLE hint */}
-      {showBleHint && !isBluetoothOn && (
+      {/* Small startup BLE hint ....... commented out!!*/}
+      {/* {showBleHint && !isBluetoothOn && (
         <Animated.View
           pointerEvents="none"
           style={[
@@ -616,7 +623,7 @@ const Navbar = forwardRef((props, ref) => {
             </View>
           </View>
         </Animated.View>
-      )}
+      )} */}
 
       {/* Bluetooth action button — intentionally kept clean, with no circle */}
       <TouchableOpacity
@@ -628,7 +635,7 @@ const Navbar = forwardRef((props, ref) => {
         <MaterialCommunityIcons
           name={isBluetoothOn ? "bluetooth-connect" : "bluetooth-off"}
           size={40}
-          color={isBluetoothOn ? "#0ee50be2" : "#ffffff"}
+          color={isBluetoothOn ? "#88c8ff" : "#ffffff"}
           style={styles.icon}
         />
       </TouchableOpacity>

@@ -17,8 +17,17 @@ import SourceAlertNotification from "./SourceAlertNotification/SourceAlertNotifi
 import SourceMediaControl from "./SourceMediaControl/SourceMediaControl"; // New component for Source media control
 import SourceSettings from "./SourceSettings/SourceSettings";
 import HorizontalTabBar from "../HorizontalTabBar/HorizontalTabBar";
+import { readSourceDeviceInformation } from "../../services/sourceDeviceInfoService";
+import useDeviceInformation from "../../hooks/useDeviceInformation";
+import useWifiSsidDiagnostics from "../../hooks/useWifiSsidDiagnostics";
 
 const SourceTabs = ({ device }) => {
+  // Same session ownership as Detector: one existing BLE read, one Wi-Fi
+  // monitor, shared by Source Info and Camera Header regardless of selected tab.
+  const deviceInformation = useDeviceInformation(
+    device, readSourceDeviceInformation, "Failed to read Source information",
+  );
+  const wifiStatus = useWifiSsidDiagnostics(device, deviceInformation.info?.ssid);
   // Device Information is currently the first and only Source tab.
   const [selectedTab, setSelectedTab] = useState("deviceInfo");
 
@@ -69,7 +78,7 @@ const SourceTabs = ({ device }) => {
       {/* Hide video on Settings so Settings receives the full screen height */}
       {selectedTab !== "settings" && (
         <View style={styles.videoContainer}>
-          <VideoStream device={device} />
+          <VideoStream device={device} wifiStatus={wifiStatus} />
         </View>
       )}
 
@@ -93,7 +102,7 @@ const SourceTabs = ({ device }) => {
 
         {/* Selected tab content. */}
         <View style={styles.screenArea}>
-          {selectedTab === "deviceInfo" && <SourceDeviceInfo device={device} />}
+          {selectedTab === "deviceInfo" && <SourceDeviceInfo {...deviceInformation} />}
 
           {/*
               SourceMediaControl stays mounted so accelerometer

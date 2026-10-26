@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
 
   icon: {
-    marginRight: 15,
+    marginRight: 1,
   },
 
   title: {
