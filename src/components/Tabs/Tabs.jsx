@@ -1,11 +1,6 @@
 // src/components/Tabs/Tabs.jsx
 import React, { useLayoutEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import DeviceInfo from "./DeviceInfo/DeviceInfo";
 import GenericAccess from "./GenericAccess/GenericAccess";
 import Environmental from "./Environmental/Environmental";
@@ -28,8 +23,15 @@ const RESOLUTION_REFRESH_DELAY_MS = 5000;
 const Tabs = ({ device }) => {
   // Session-owned Info read and Wi-Fi monitor survive tab/video remounts. Share
   // the same BLE result with Info and the header; neither child reads it again.
-  const deviceInformation = useDeviceInformation(device, readDeviceInformation, "Failed to read");
-  const wifiStatus = useWifiSsidDiagnostics(device, deviceInformation.info?.ssid);
+  const deviceInformation = useDeviceInformation(
+    device,
+    readDeviceInformation,
+    "Failed to read",
+  );
+  const wifiStatus = useWifiSsidDiagnostics(
+    device,
+    deviceInformation.info?.ssid,
+  );
   const [selectedTab, setSelectedTab] = useState("deviceInfo"); // Default tab when the dashboard opens.
 
   // This key is used to tell VideoStream to refresh/remount.
@@ -38,9 +40,8 @@ const Tabs = ({ device }) => {
 
   // Zoom belongs to the connected dashboard, rather than the Device Control tab:
   // that tab unmounts when another tab is selected, but video can remain visible.
-  // 1 preserves the initial Zoom Out highlight. This is an assumption at startup;
-  // subsequent highlights mean "last successful BLE write", not confirmed FoV.
-  const [selectedResolution, setSelectedResolution] = useState(1);
+
+  const [selectedResolution, setSelectedResolution] = useState(null);
   const [resolutionBusy, setResolutionBusy] = useState(false);
   const [resolutionError, setResolutionError] = useState(null);
   const resolutionSessionRef = useRef(null);
@@ -59,7 +60,7 @@ const Tabs = ({ device }) => {
       finishWait: null,
     };
     resolutionSessionRef.current = session;
-    setSelectedResolution(1);
+    setSelectedResolution(null);
     setResolutionBusy(false);
     setResolutionError(null);
 
@@ -68,7 +69,10 @@ const Tabs = ({ device }) => {
       if (session.timer !== null) {
         clearTimeout(session.timer);
         session.timer = null;
-        console.log("Tabs.jsx: Cancelled pending zoom video refresh:", device?.id);
+        console.log(
+          "Tabs.jsx: Cancelled pending zoom video refresh:",
+          device?.id,
+        );
       }
       // Release the waiting promise as well as the timer. The handler checks
       // session.active before updating state or refreshing a later connection.
@@ -84,7 +88,10 @@ const Tabs = ({ device }) => {
     const session = resolutionSessionRef.current;
     if (!device || !session?.active || session.device !== device) return;
     if (session.pending) {
-      console.log("Tabs.jsx: Ignoring zoom press while an operation is pending:", value);
+      console.log(
+        "Tabs.jsx: Ignoring zoom press while an operation is pending:",
+        value,
+      );
       return;
     }
     if (value !== 0 && value !== 1) return;
@@ -103,7 +110,10 @@ const Tabs = ({ device }) => {
     try {
       const ok = await writeResolutionControl(device, value);
       if (!session.active) {
-        console.log("Tabs.jsx: Ignoring zoom result from a closed session:", command);
+        console.log(
+          "Tabs.jsx: Ignoring zoom result from a closed session:",
+          command,
+        );
         return;
       }
       if (!ok) {
@@ -129,13 +139,20 @@ const Tabs = ({ device }) => {
       });
       if (!session.active) return;
 
-      console.log("Tabs.jsx: Refreshing video after zoom settling window (FoV unverified):", {
-        ...command,
-        elapsedMs: Date.now() - startedAt,
-      });
+      console.log(
+        "Tabs.jsx: Refreshing video after zoom settling window (FoV unverified):",
+        {
+          ...command,
+          elapsedMs: Date.now() - startedAt,
+        },
+      );
       setVideoRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.log("Tabs.jsx: Zoom operation failed:", command, error?.message || error);
+      console.log(
+        "Tabs.jsx: Zoom operation failed:",
+        command,
+        error?.message || error,
+      );
       if (session.active) setResolutionError("Failed to write Resolution");
     } finally {
       session.pending = false;
@@ -208,7 +225,9 @@ const Tabs = ({ device }) => {
 
         {/* Tab scrren chosen */}
         <View style={styles.screenArea}>
-          {selectedTab === "deviceInfo" && <DeviceInfo {...deviceInformation} />}
+          {selectedTab === "deviceInfo" && (
+            <DeviceInfo {...deviceInformation} />
+          )}
           <View
             style={{
               flex: 1,

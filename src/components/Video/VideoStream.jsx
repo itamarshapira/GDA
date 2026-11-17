@@ -7,7 +7,7 @@
 Page load events do not confirm authentication, fresh frames, or the applied FoV.
 */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -103,6 +103,28 @@ const VideoStream = ({
     setCurrentUrl(AUTH_WARMUP_URL);
     setVideoKey((prev) => prev + 1);
   };
+  // Remember the last confirmed Wi-Fi status.
+  // "unknown" is ignored because it can occur during normal checks.
+  const lastKnownWifiStatusRef = useRef(null);
+
+  useEffect(() => {
+    const status = wifiStatus.status;
+
+    // Ignore temporary unknown states.
+    if (status !== "matched" && status !== "disconnected") {
+      return;
+    }
+
+    const previousStatus = lastKnownWifiStatusRef.current;
+    lastKnownWifiStatusRef.current = status;
+
+    // Refresh only when Wi-Fi becomes matched,
+    // not on every periodic Wi-Fi check.
+    if (status === "matched" && previousStatus !== "matched") {
+      console.log("[VideoStream] Device Wi-Fi connected - auto refresh");
+      refreshVideo();
+    }
+  }, [wifiStatus.status]);
 
   const [videoError, setVideoError] = useState(false); // State to track video errors
 

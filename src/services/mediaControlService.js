@@ -249,6 +249,60 @@ export async function writeResolutionControl(device, value) {
   try {
     console.log("mediaControlService.js: Zoom BLE write started:", command);
 
+     // Read the current Zoom value stored in the STM32 before writing.
+    // Diagnostic only: this does not change the camera or MCU state.
+    const currentValue = await readUint8Characteristic(
+      device,
+      MEDIA_CONTROL_UUID,
+      RESOLUTION_CONTROL_UUID
+    );
+
+    console.log("[Zoom Debug] BLE value before write:", {
+      currentValue,
+      requestedValue: value,
+      sameValue: currentValue === value,
+    });
+
+  console.log("mediaControlService.js: Zoom BLE write started:", command);
+
+  // TEMPORARY TEST: Handle the first Zoom In when MCU already stores 0.
+// The MCU appears to forward Zoom commands only when the BLE value changes.
+if (currentValue === 0 && value === 0) {
+  console.log("[Zoom Fix] Same value (0). Sending Zoom Out first.");
+
+  // 1. Force a value change: 0 -> 1.
+  const resetOk = await writeUint8Characteristic(
+    device,
+    MEDIA_CONTROL_UUID,
+    RESOLUTION_CONTROL_UUID,
+    1
+  );
+
+  if (!resetOk) {
+    console.log("[Zoom Fix] Failed to send intermediate value 1.");
+    return false;
+  }
+
+  // 2. Give the Pi time to restart its camera and serial connection.
+  // Experimental delay only; this is not a readiness confirmation.
+  console.log("[Zoom Fix] Waiting 12 seconds for Pi recovery...");
+  await new Promise(resolve => setTimeout(resolve, 12000));
+
+  // 3. Verify that the MCU characteristic still contains 1.
+  const resetValue = await readUint8Characteristic(
+    device,
+    MEDIA_CONTROL_UUID,
+    RESOLUTION_CONTROL_UUID
+  );
+
+  if (resetValue !== 1) {
+    console.log("[Zoom Fix] Unexpected BLE value after waiting:", resetValue);
+    return false;
+  }
+
+  console.log("[Zoom Fix] Ready to send requested Zoom In (0).");
+}
+
     // Preserve the firmware contract: one UInt8 byte, with response, awaited.
     // No readback/notify completion protocol is defined here; do not infer Pi
     // success from this BLE result or automatically resend a failed command.
